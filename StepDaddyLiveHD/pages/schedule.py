@@ -7,101 +7,117 @@ from StepDaddyLiveHD import backend
 from StepDaddyLiveHD.components import navbar
 
 
-class ChannelItem(TypedDict):
-    name: str
+class CanalItem(TypedDict):
+    nombre: str
     id: str
 
 
-class EventItem(TypedDict):
-    name: str
-    time: str
+class EventoItem(TypedDict):
+    nombre: str
+    hora: str
     dt: datetime
-    category: str
-    channels: List[ChannelItem]
+    categoria: str
+    canales: List[CanalItem]
 
 
-class ScheduleState(rx.State):
-    events: List[EventItem] = []
-    categories: Dict[str, bool] = {}
-    switch: bool = True
-    search_query: str = ""
+class EstadoHorario(rx.State):
+    eventos: List[EventoItem] = []
+    categorias: Dict[str, bool] = {}
+    mostrar_solo_futuros: bool = True
+    consulta: str = ""
 
     @staticmethod
-    def get_channels(channels: dict) -> List[ChannelItem]:
-        channel_list = []
-        if isinstance(channels, list):
-            for channel in channels:
+    def obtener_canales(canales: dict) -> List[CanalItem]:
+        lista_canales = []
+        if isinstance(canales, list):
+            for canal in canales:
                 try:
-                    channel_list.append(ChannelItem(name=channel["channel_name"], id=channel["channel_id"]))
+                    lista_canales.append(CanalItem(nombre=canal["channel_name"], id=canal["channel_id"]))
                 except:
                     continue
-        elif isinstance(channels, dict):
-            for channel_dic in channels:
+        elif isinstance(canales, dict):
+            for clave in canales:
                 try:
-                    channel_list.append(ChannelItem(name=channels[channel_dic]["channel_name"], id=channels[channel_dic]["channel_id"]))
+                    lista_canales.append(CanalItem(
+                        nombre=canales[clave]["channel_name"], 
+                        id=canales[clave]["channel_id"]
+                    ))
                 except:
                     continue
-        return channel_list
+        return lista_canales
 
-    def toggle_category(self, category):
-        self.categories[category] = not self.categories.get(category, False)
+    def alternar_categoria(self, categoria):
+        self.categorias[categoria] = not self.categorias.get(categoria, False)
 
-    def double_category(self, category):
-        for cat in self.categories:
-            if cat != category:
-                self.categories[cat] = False
-            else:
-                self.categories[cat] = True
+    def doble_categoria(self, categoria):
+        for cat in self.categorias:
+            self.categorias[cat] = (cat == categoria)
 
     async def on_load(self):
-        self.events = []
-        categories = {}
-        days = await backend.get_schedule()
-        for day in days:
-            name = day.split(" - ")[0]
-            dt = parser.parse(name, dayfirst=True)
-            for category in days[day]:
-                categories[category] = True
-                for event in days[day][category]:
-                    time = event["time"]
-                    hour, minute = map(int, time.split(":"))
-                    event_dt = dt.replace(hour=hour, minute=minute).replace(tzinfo=ZoneInfo("UTC"))
-                    channels = self.get_channels(event.get("channels"))
-                    channels.extend(self.get_channels(event.get("channels2")))
-                    channels.sort(key=lambda channel: channel["name"])
-                    self.events.append(EventItem(name=event["event"], time=time, dt=event_dt, category=category, channels=channels))
-        self.categories = dict(sorted(categories.items()))
-        self.events.sort(key=lambda event: event["dt"])
+        self.eventos = []
+        categorias = {}
+        dias = await backend.get_schedule()
+        for dia in dias:
+            nombre_dia = dia.split(" - ")[0]
+            dt = parser.parse(nombre_dia, dayfirst=True)
+            for categoria in dias[dia]:
+                categorias[categoria] = True
+                for evento in dias[dia][categoria]:
+                    hora = evento["time"]
+                    hora_int, minuto_int = map(int, hora.split(":"))
+                    evento_dt = dt.replace(hour=hora_int, minute=minuto_int).replace(tzinfo=ZoneInfo("UTC"))
+                    canales = self.obtener_canales(evento.get("channels"))
+                    canales.extend(self.obtener_canales(evento.get("channels2")))
+                    canales.sort(key=lambda c: c["nombre"])
+                    self.eventos.append(EventoItem(
+                        nombre=evento["event"],
+                        hora=hora,
+                        dt=evento_dt,
+                        categoria=categoria,
+                        canales=canales
+                    ))
+        self.categorias = dict(sorted(categorias.items()))
+        self.eventos.sort(key=lambda e: e["dt"])
 
     @rx.event
-    def set_switch(self, value: bool):
-        self.switch = value
+    def set_mostrar_solo_futuros(self, valor: bool):
+        self.mostrar_solo_futuros = valor
+
+    @rx.event
+    def set_consulta(self, valor: str):
+        self.consulta = valor
 
     @rx.var
-    def filtered_events(self) -> List[EventItem]:
-        now = datetime.now(ZoneInfo("UTC")) - timedelta(minutes=30)
-        query = self.search_query.strip().lower()
+    def eventos_filtrados(self) -> List[EventoItem]:
+        ahora = datetime.now(ZoneInfo("UTC")) - timedelta(minutes=30)
+        texto = self.consulta.strip().lower()
 
         return [
-            event for event in self.events
-            if self.categories.get(event["category"], False)
-               and (not self.switch or event["dt"] > now)
-               and (query == "" or query in event["name"].lower())
+            evento for evento in self.eventos
+            if self.categorias.get(evento["categoria"], False)
+               and (not self.mostrar_solo_futuros or evento["dt"] > ahora)
+               and (texto == "" or texto in evento["nombre"].lower())
         ]
 
 
-def event_card(event: EventItem) -> rx.Component:
+def tarjeta_evento(evento: EventoItem) -> rx.Component:
     return rx.card(
-        rx.heading(event["name"]),
+        rx.heading(evento["nombre"]),
         rx.hstack(
-            rx.moment(event["dt"], format="HH:mm", local=True),
-            rx.moment(event["dt"], format="ddd MMM DD YYYY", local=True),
-            rx.badge(event["category"], margin_top="0.2rem"),
+            rx.moment(evento["dt"], format="HH:mm", local=True),
+            rx.moment(evento["dt"], format="ddd MMM DD YYYY", local=True),
+            rx.badge(evento["categoria"], margin_top="0.2rem"),
         ),
         rx.hstack(
             rx.foreach(
-                event["channels"],
-                lambda channel: rx.button(channel["name"], variant="surface", color_scheme="gray", size="1", on_click=rx.redirect(f"/watch/{channel['id']}")),
+                evento["canales"],
+                lambda canal: rx.button(
+                    canal["nombre"],
+                    variant="surface",
+                    color_scheme="gray",
+                    size="1",
+                    on_click=rx.redirect(f"/watch/{canal['id']}")
+                ),
             ),
             wrap="wrap",
             margin_top="0.5rem",
@@ -110,51 +126,51 @@ def event_card(event: EventItem) -> rx.Component:
     )
 
 
-def category_badge(category) -> rx.Component:
+def insignia_categoria(categoria) -> rx.Component:
     return rx.badge(
-        category[0],
+        categoria[0],
         color_scheme=rx.cond(
-            category[1],
+            categoria[1],
             "red",
             "gray",
         ),
         _hover={"color": "white"},
         style={"cursor": "pointer"},
-        on_click=lambda: ScheduleState.toggle_category(category[0]),
-        on_double_click=lambda: ScheduleState.double_category(category[0]),
+        on_click=lambda: EstadoHorario.alternar_categoria(categoria[0]),
+        on_double_click=lambda: EstadoHorario.doble_categoria(categoria[0]),
         size="2",
     )
 
 
-@rx.page("/schedule", on_load=ScheduleState.on_load)
-def schedule() -> rx.Component:
+@rx.page("/schedule", on_load=EstadoHorario.on_load)
+def horario() -> rx.Component:
     return rx.box(
         navbar(),
         rx.container(
             rx.center(
                 rx.vstack(
                     rx.cond(
-                        ScheduleState.categories,
+                        EstadoHorario.categorias,
                         rx.card(
                             rx.input(
-                                placeholder="Search events...",
-                                on_change=ScheduleState.set_search_query,
-                                value=ScheduleState.search_query,
+                                placeholder="Buscar eventos...",
+                                on_change=EstadoHorario.set_consulta,
+                                value=EstadoHorario.consulta,
                                 width="100%",
                                 size="3",
                             ),
                             rx.hstack(
-                                rx.text("Filter by tag:"),
-                                rx.foreach(ScheduleState.categories, category_badge),
+                                rx.text("Filtrar por etiqueta:"),
+                                rx.foreach(EstadoHorario.categorias, insignia_categoria),
                                 spacing="2",
                                 wrap="wrap",
                                 margin_top="0.7rem",
                             ),
                             rx.hstack(
-                                rx.text("Hide past events"),
+                                rx.text("Ocultar eventos pasados"),
                                 rx.switch(
-                                    on_change=ScheduleState.set_switch,
-                                    checked=ScheduleState.switch,
+                                    on_change=EstadoHorario.set_mostrar_solo_futuros,
+                                    checked=EstadoHorario.mostrar_solo_futuros,
                                     margin_top="0.2rem"
                                 ),
                                 margin_top="0.5rem",
@@ -162,7 +178,7 @@ def schedule() -> rx.Component:
                         ),
                         rx.spinner(size="3"),
                     ),
-                    rx.foreach(ScheduleState.filtered_events, event_card),
+                    rx.foreach(EstadoHorario.eventos_filtrados, tarjeta_evento),
                 ),
             ),
             padding_top="10rem",
