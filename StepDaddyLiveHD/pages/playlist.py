@@ -20,48 +20,49 @@ def playlist() -> rx.Component:
                                         "info",
                                     ),
                                     rx.text(
-                                        "El contenido proxy está deshabilitado en esta instancia. Algunos clientes pueden no funcionar.",
+                                        "Proxy content is disabled on this instance. Some clients may not work.",
                                     ),
                                 ),
                                 width="100%",
                                 background_color=rx.color("accent", 7),
                             ),
                         ),
-                        rx.heading("Bienvenido a StepDaddyLiveHD", size="7", margin_bottom="1rem"),
+                        rx.heading("Welcome to StepDaddyLiveHD", size="7", margin_bottom="1rem"),
                         rx.text(
-                            "StepDaddyLiveHD te permite ver diversos canales de TV vía IPTV. "
-                            "Puedes descargar el archivo de lista de reproducción más abajo y usarlo con tu reproductor multimedia favorito.",
+                            "StepDaddyLiveHD allows you to watch various TV channels via IPTV. "
+                            "You can download the playlist file below and use it with your favorite media player.",
                         ),
 
                         rx.divider(margin_y="1.5rem"),
 
-                        rx.heading("Cómo usar", size="5", margin_bottom="0.5rem"),
+                        rx.heading("How to Use", size="5", margin_bottom="0.5rem"),
                         rx.text(
-                            "1. Copia el enlace de abajo o descarga el archivo de la lista de reproducción",
+                            "1. Copy the link below or download the playlist file",
                             margin_bottom="0.5rem",
                             font_weight="medium",
                         ),
                         rx.text(
-                            "2. Ábrelo con tu reproductor multimedia o aplicación de IPTV preferida",
+                            "2. Open it with your preferred media player or IPTV app",
                             margin_bottom="1.5rem",
                             font_weight="medium",
                         ),
 
                         rx.hstack(
                             rx.button(
-                                "Descargar lista de reproducción",
+                                "Download Playlist",
                                 rx.icon("download", margin_right="0.5rem"),
                                 on_click=rx.redirect(f"{config.api_url}/playlist.m3u8", is_external=True),
                                 size="3",
                             ),
                             rx.button(
-                                "Copiar enlace",
+                                "Copy Link",
                                 rx.icon("clipboard", margin_right="0.5rem"),
                                 on_click=[
                                     rx.set_clipboard(f"{config.api_url}/playlist.m3u8"),
-                                    rx.toast("¡URL de la lista copiada en el portapapeles!"),
+                                    rx.toast("Playlist URL copied to clipboard!"),
                                 ],
                                 size="3",
+                                # variant="soft",
                                 color_scheme="gray",
                             ),
                             width="100%",
@@ -85,18 +86,18 @@ def playlist() -> rx.Component:
 
                         rx.divider(margin_y="1rem"),
 
-                        rx.heading("Reproductores compatibles", size="5", margin_bottom="1rem"),
+                        rx.heading("Compatible Players", size="5", margin_bottom="1rem"),
                         rx.text(
-                            "Puedes usar la lista m3u8 con la mayoría de reproductores multimedia y aplicaciones de IPTV:",
+                            "You can use the m3u8 playlist with most media players and IPTV applications:",
                             margin_bottom="1rem",
                         ),
                         rx.card(
                             rx.vstack(
                                 rx.heading("VLC Media Player", size="6"),
-                                rx.text("Reproductor multimedia gratuito y de código abierto muy popular"),
+                                rx.text("Popular free and open-source media player"),
                                 rx.spacer(),
                                 rx.link(
-                                    "Descargar",
+                                    "Download",
                                     href="https://www.videolan.org/vlc/",
                                     target="_blank",
                                     color="blue.500",
@@ -112,10 +113,10 @@ def playlist() -> rx.Component:
                         rx.card(
                             rx.vstack(
                                 rx.heading("IPTVnator", size="6"),
-                                rx.text("Aplicación de reproductor IPTV multiplataforma"),
+                                rx.text("Cross-platform IPTV player application"),
                                 rx.spacer(),
                                 rx.link(
-                                    "Descargar",
+                                    "Download",
                                     href="https://github.com/4gray/iptvnator",
                                     target="_blank",
                                     color="blue.500",
@@ -131,10 +132,10 @@ def playlist() -> rx.Component:
                         rx.card(
                             rx.vstack(
                                 rx.heading("Jellyfin", size="6"),
-                                rx.text("Sistema multimedia gratuito para gestionar tus archivos"),
+                                rx.text("Free media system to manage your media"),
                                 rx.spacer(),
                                 rx.link(
-                                    "Descargar",
+                                    "Download",
                                     href="https://jellyfin.org/",
                                     target="_blank",
                                     color="blue.500",
@@ -150,8 +151,8 @@ def playlist() -> rx.Component:
                         rx.divider(margin_y="1rem"),
 
                         rx.text(
-                            "¿Necesitas ayuda? La mayoría de reproductores multimedia permiten abrir transmisiones en red o listas de IPTV. "
-                            "Simplemente pega la URL m3u8 anterior o importa el archivo descargado.",
+                            "Need help? Most media players allow you to open network streams or IPTV playlists. "
+                            "Simply paste the m3u8 URL above or import the downloaded playlist file.",
                             font_style="italic",
                             color="gray.600",
                             text_align="center",
