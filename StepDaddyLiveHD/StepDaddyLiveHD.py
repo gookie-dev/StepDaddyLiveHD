@@ -15,8 +15,8 @@ class State(rx.State):
     def available_countries(self) -> List[str]:
         countries = set()
         for channel in self.channels:
-            if channel.country:
-                countries.add(channel.country)
+            if channel.country and channel.country_flag:
+                countries.add(f"{channel.country_flag} {channel.country}")
         return sorted(list(countries))
 
     @rx.var
@@ -25,7 +25,8 @@ class State(rx.State):
         if self.search_query:
             filtered = [ch for ch in filtered if self.search_query.lower() in ch.name.lower()]
         if self.selected_country:
-            filtered = [ch for ch in filtered if ch.country == self.selected_country]
+            country_name = self.selected_country.split(" ", 1)[1] if " " in self.selected_country else self.selected_country
+            filtered = [ch for ch in filtered if ch.country == country_name]
         return filtered
 
     async def on_load(self):
