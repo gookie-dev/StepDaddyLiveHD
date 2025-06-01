@@ -11,7 +11,5 @@ config = rx.Config(
     proxy_content=proxy_content,
     socks5=socks5,
     show_built_with_reflex=False,
-    plugins=[
-        rx.plugins.TailwindV3Plugin()
-    ],
+    tailwind=True,
 )
