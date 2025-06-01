@@ -3,7 +3,7 @@ import re
 import reflex as rx
 from urllib.parse import quote, urlparse
 from curl_cffi import AsyncSession
-from typing import List
+from typing import List, Optional
 from .utils import encrypt, decrypt, urlsafe_base64
 from rxconfig import config
 
@@ -13,6 +13,8 @@ class Channel(rx.Base):
     name: str
     tags: List[str]
     logo: str
+    country: Optional[str] = None
+    country_flag: Optional[str] = None
 
 
 class StepDaddy:
@@ -38,6 +40,21 @@ class StepDaddy:
             headers["Origin"] = origin
         return headers
 
+    def _get_country_from_tags(self, tags: List[str]) -> tuple[Optional[str], Optional[str]]:
+        for tag in tags:
+            if len(tag) == 2 and all(c in '🇦🇧🇨🇩🇪🇫🇬🇭🇮🇯🇰🇱🇲🇳🇴🇵🇶🇷🇸🇹🇺🇻🇼🇽🇾🇿' for c in tag):
+                country_map = {
+                    '🇮🇹': 'Italy',
+                    '🇬🇧': 'United Kingdom',
+                    '🇺🇸': 'United States',
+                    '🇪🇸': 'Spain',
+                    '🇫🇷': 'France',
+                    '🇩🇪': 'Germany',
+                    # Add more country mappings as needed
+                }
+                return country_map.get(tag, 'Other'), tag
+        return None, None
+
     async def load_channels(self):
         channels = []
         try:
@@ -47,7 +64,7 @@ class StepDaddy:
             for channel_data in channels_data:
                 channels.append(self._get_channel(channel_data))
         finally:
-            self.channels = sorted(channels, key=lambda channel: (channel.name.startswith("18"), channel.name))
+            self.channels = sorted(channels, key=lambda channel: (channel.country or 'ZZZ', channel.name.startswith("18"), channel.name))
 
     def _get_channel(self, channel_data) -> Channel:
         channel_id = channel_data[0].split('-')[1].replace('.php', '')
@@ -65,7 +82,16 @@ class StepDaddy:
         logo = meta.get("logo", "/missing.png")
         if logo.startswith("http"):
             logo = f"{config.api_url}/logo/{urlsafe_base64(logo)}"
-        return Channel(id=channel_id, name=channel_name, tags=meta.get("tags", []), logo=logo)
+        tags = meta.get("tags", [])
+        country, country_flag = self._get_country_from_tags(tags)
+        return Channel(
+            id=channel_id,
+            name=channel_name,
+            tags=tags,
+            logo=logo,
+            country=country,
+            country_flag=country_flag
+        )
 
     async def stream(self, channel_id: str):
         url = f"{self._base_url}/stream/stream-{channel_id}.php"
@@ -75,7 +101,6 @@ class StepDaddy:
         source_url = re.compile("iframe src=\"(.*)\" width").findall(response.text)[0]
         source_response = await self._session.post(source_url, headers=self._headers(url))
 
-        # Not generic
         channel_key = re.compile(r"var\s+channelKey\s*=\s*\"(.*?)\";").findall(source_response.text)[-1]
         auth_ts = re.compile(r"var\s+authTs\s*=\s*\"(.*?)\";").findall(source_response.text)[-1]
         auth_rnd = re.compile(r"var\s+authRnd\s*=\s*\"(.*?)\";").findall(source_response.text)[-1]
@@ -119,9 +144,25 @@ class StepDaddy:
 
     def playlist(self):
         data = "#EXTM3U\n"
+        current_country = None
         for channel in self.channels:
-            entry = f" tvg-logo=\"{channel.logo}\",{channel.name}" if channel.logo else f",{channel.name}"
-            data += f"#EXTINF:-1{entry}\n{config.api_url}/stream/{channel.id}.m3u8\n"
+            if channel.country and channel.country != current_country:
+                current_country = channel.country
+                data += f"\n#EXTGRP:{current_country}\n"
+            
+            tvg_tags = []
+            if channel.logo:
+                tvg_tags.append(f'tvg-logo="{channel.logo}"')
+            if channel.country:
+                tvg_tags.append(f'group-title="{channel.country}"')
+            if channel.country_flag:
+                channel_name = f"{channel.country_flag} {channel.name}"
+            else:
+                channel_name = channel.name
+            
+            tvg_string = " ".join(tvg_tags)
+            data += f"#EXTINF:-1 {tvg_string},{channel_name}\n"
+            data += f"{config.api_url}/stream/{channel.id}.m3u8\n"
         return data
 
     async def schedule(self):

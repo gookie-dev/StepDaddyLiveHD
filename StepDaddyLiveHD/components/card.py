@@ -47,7 +47,15 @@ def card(channel: Channel) -> rx.Component:
                 rx.center(
                     rx.box(
                         rx.heading(
-                            channel.name,
+                            rx.cond(
+                                channel.country_flag,
+                                rx.text(
+                                    channel.country_flag,
+                                    " ",
+                                    channel.name,
+                                ),
+                                channel.name,
+                            ),
                             color="white",
                             align="center",
                         ),
