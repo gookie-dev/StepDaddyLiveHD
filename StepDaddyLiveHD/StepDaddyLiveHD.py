@@ -33,33 +33,35 @@ class State(rx.State):
         self.channels = backend.get_channels()
 
 
+def search_component() -> rx.Component:
+    return rx.hstack(
+        rx.input(
+            rx.input.slot(
+                rx.icon("search"),
+            ),
+            placeholder="Search channels...",
+            on_change=State.set_search_query,
+            value=State.search_query,
+            width="100%",
+            max_width="25rem",
+            size="3",
+        ),
+        rx.select(
+            State.available_countries,
+            placeholder="Filter by country",
+            on_change=State.set_selected_country,
+            value=State.selected_country,
+            size="3",
+            width="12rem",
+        ),
+        spacing="4",
+    )
+
+
 @rx.page("/", on_load=State.on_load)
 def index() -> rx.Component:
     return rx.box(
-        navbar(
-            rx.hstack(
-                rx.input(
-                    rx.input.slot(
-                        rx.icon("search"),
-                    ),
-                    placeholder="Search channels...",
-                    on_change=State.set_search_query,
-                    value=State.search_query,
-                    width="100%",
-                    max_width="25rem",
-                    size="3",
-                ),
-                rx.select(
-                    State.available_countries,
-                    placeholder="Filter by country",
-                    on_change=State.set_selected_country,
-                    value=State.selected_country,
-                    size="3",
-                    width="12rem",
-                ),
-                spacing="4",
-            ),
-        ),
+        navbar(search_component()),
         rx.center(
             rx.cond(
                 State.channels,
@@ -93,6 +95,9 @@ app = rx.App(
         accent_color="red",
     ),
     api_transformer=backend.fastapi_app,
+    plugins=[
+        rx.plugins.TailwindV3Plugin()
+    ],
 )
 
 app.register_lifespan_task(backend.update_channels)
