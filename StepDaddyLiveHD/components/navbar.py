@@ -1,8 +1,4 @@
-from pyexpat.errors import XML_ERROR_INVALID_ARGUMENT
-
 import reflex as rx
-from pygments.styles.dracula import background
-
 from rxconfig import config
 
 
@@ -29,7 +25,7 @@ def navbar_icons_menu_item(text: str, icon: str, url: str, external: bool = Fals
     )
 
 
-def navbar(search=None) -> rx.Component:
+def navbar(search_component: rx.Component = None) -> rx.Component:
     return rx.box(
         rx.card(
             rx.desktop_only(
@@ -48,8 +44,8 @@ def navbar(search=None) -> rx.Component:
                         on_click=rx.redirect("/")
                     ),
                     rx.cond(
-                        search,
-                        search,
+                        search_component is not None,
+                        search_component,
                         rx.text(
                             "Watch ",
                             rx.code("live"),
@@ -87,8 +83,8 @@ def navbar(search=None) -> rx.Component:
                         ),
                         rx.tablet_only(
                             rx.cond(
-                                search,
-                                search,
+                                search_component is not None,
+                                search_component,
                                 rx.fragment(),
                             ),
                         ),
@@ -108,10 +104,10 @@ def navbar(search=None) -> rx.Component:
                         width="100%",
                     ),
                     rx.cond(
-                        search,
+                        search_component is not None,
                         rx.mobile_only(
                             rx.box(
-                                search,
+                                search_component,
                                 width="100%",
                             ),
                             width="100%",
