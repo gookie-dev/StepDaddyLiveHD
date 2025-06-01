@@ -5,7 +5,7 @@ import asyncio
 from urllib.parse import quote, urlparse
 from curl_cffi import AsyncSession
 from typing import List, Optional, Dict
-from .utils import encrypt, decrypt, urlsafe_base64, get_meta_data, get_cached, set_cached, stream_cache, key_cache
+from .utils import encrypt, decrypt, urlsafe_base64, get_meta_data, get_cached, set_cached, stream_cache, key_cache, cache_logo
 from rxconfig import config
 
 
@@ -56,11 +56,14 @@ class StepDaddy:
             '\ud83c\uddea\ud83c\uddf8': 'Spain',  # 🇪🇸
             '\ud83c\uddeb\ud83c\uddf7': 'France',  # 🇫🇷
             '\ud83c\udde9\ud83c\uddea': 'Germany',  # 🇩🇪
+            # Agregar más mapeos según sea necesario
         }
         
         country = country_map.get(flag)
         if country:
-            return country, flag
+            # Decodificar el emoji de la bandera para mostrarlo correctamente
+            flag_emoji = flag.encode('utf-16', 'surrogatepass').decode('utf-16')
+            return country, flag_emoji
             
         return None, None
 
@@ -71,11 +74,11 @@ class StepDaddy:
             channels_block = re.compile("<center><h1(.+?)tab-2", re.MULTILINE | re.DOTALL).findall(str(response.text))
             channels_data = re.compile("href=\"(.*)\" target(.*)<strong>(.*)</strong>").findall(channels_block[0])
             for channel_data in channels_data:
-                channels.append(self._get_channel(channel_data))
+                channels.append(await self._get_channel(channel_data))
         finally:
             self.channels = sorted(channels, key=lambda channel: (channel.country or 'ZZZ', channel.name.startswith("18"), channel.name))
 
-    def _get_channel(self, channel_data) -> Channel:
+    async def _get_channel(self, channel_data) -> Channel:
         channel_id = channel_data[0].split('-')[1].replace('.php', '')
         channel_name = channel_data[2]
         if channel_id == "666":
@@ -89,10 +92,19 @@ class StepDaddy:
         clean_channel_name = re.sub(r"\s*\(.*?\)", "", channel_name)
         meta = self._meta.get(clean_channel_name, {})
         logo = meta.get("logo", "/missing.png")
+        
         if logo.startswith("http"):
-            logo = f"{config.api_url}/logo/{urlsafe_base64(logo)}"
+            # Cache the logo
+            file_name = f"{channel_id}.{logo.split('.')[-1]}"
+            try:
+                logo_path = await cache_logo(logo, file_name)
+                logo = f"{config.api_url}/logo/{urlsafe_base64(logo)}"
+            except:
+                logo = "/missing.png"
+                
         tags = meta.get("tags", [])
         country, country_flag = self._get_country_from_tags(tags)
+        
         return Channel(
             id=channel_id,
             name=channel_name,

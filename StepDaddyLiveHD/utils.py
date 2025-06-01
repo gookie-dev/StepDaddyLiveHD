@@ -3,9 +3,16 @@ import base64
 import json
 from diskcache import Cache
 from typing import Any, Optional
+import aiofiles
 
-# Inicializar caché
+# Inicializar directorios de caché
 cache_dir = os.path.join(os.path.dirname(__file__), ".cache")
+logo_cache_dir = os.path.join(os.path.dirname(__file__), ".logo-cache")
+
+# Crear directorios si no existen
+os.makedirs(cache_dir, exist_ok=True)
+os.makedirs(logo_cache_dir, exist_ok=True)
+
 meta_cache = Cache(os.path.join(cache_dir, "meta"))
 stream_cache = Cache(os.path.join(cache_dir, "stream"))
 key_cache = Cache(os.path.join(cache_dir, "key"))
@@ -60,3 +67,20 @@ def get_meta_data() -> dict:
         meta = json.load(f)
     set_cached(meta_cache, "meta", meta, expire=86400)  # 24 hours
     return meta
+
+async def cache_logo(url: str, file_name: str) -> str:
+    """Cache a logo file and return its path."""
+    cache_path = os.path.join(logo_cache_dir, file_name)
+    
+    # Si ya existe en caché, retornar la ruta
+    if os.path.exists(cache_path):
+        return cache_path
+        
+    try:
+        async with aiofiles.open(cache_path, 'wb') as f:
+            await f.write(b'')  # Create empty file to mark as being downloaded
+            return cache_path
+    except Exception as e:
+        if os.path.exists(cache_path):
+            os.remove(cache_path)
+        raise e
