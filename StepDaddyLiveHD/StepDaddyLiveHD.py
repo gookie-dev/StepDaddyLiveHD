@@ -95,9 +95,6 @@ app = rx.App(
         accent_color="red",
     ),
     api_transformer=backend.fastapi_app,
-    plugins=[
-        rx.plugins.TailwindV3Plugin()
-    ],
 )
 
 app.register_lifespan_task(backend.update_channels)
