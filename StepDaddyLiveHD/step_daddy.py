@@ -5,7 +5,7 @@ import asyncio
 from urllib.parse import quote, urlparse
 from curl_cffi import AsyncSession
 from typing import List, Optional, Dict
-from .utils import encrypt, decrypt, urlsafe_base64, load_meta_data, get_cached, set_cached, stream_cache, key_cache
+from .utils import encrypt, decrypt, urlsafe_base64, get_meta_data, get_cached, set_cached, stream_cache, key_cache
 from rxconfig import config
 
 
@@ -27,7 +27,7 @@ class StepDaddy:
             self._session = AsyncSession()
         self._base_url = "https://daddylive.dad"
         self.channels = []
-        self._meta = load_meta_data()
+        self._meta = get_meta_data()
         self._stream_locks: Dict[str, asyncio.Lock] = {}
 
     def _headers(self, referer: str = None, origin: str = None):
@@ -42,17 +42,26 @@ class StepDaddy:
         return headers
 
     def _get_country_from_tags(self, tags: List[str]) -> tuple[Optional[str], Optional[str]]:
-        for tag in tags:
-            if len(tag) == 2 and all(c in '🇦🇧🇨🇩🇪🇫🇬🇭🇮🇯🇰🇱🇲🇳🇴🇵🇶🇷🇸🇹🇺🇻🇼🇽🇾🇿' for c in tag):
-                country_map = {
-                    '🇮🇹': 'Italy',
-                    '🇬🇧': 'United Kingdom',
-                    '🇺🇸': 'United States',
-                    '🇪🇸': 'Spain',
-                    '🇫🇷': 'France',
-                    '🇩🇪': 'Germany',
-                }
-                return country_map.get(tag, 'Other'), tag
+        if not tags:
+            return None, None
+            
+        # El primer tag siempre es la bandera si existe
+        flag = tags[0]
+        
+        # Mapa de banderas a países
+        country_map = {
+            '\ud83c\uddee\ud83c\uddf9': 'Italy',  # 🇮🇹
+            '\ud83c\uddec\ud83c\udde7': 'United Kingdom',  # 🇬🇧
+            '\ud83c\uddfa\ud83c\uddf8': 'United States',  # 🇺🇸
+            '\ud83c\uddea\ud83c\uddf8': 'Spain',  # 🇪🇸
+            '\ud83c\uddeb\ud83c\uddf7': 'France',  # 🇫🇷
+            '\ud83c\udde9\ud83c\uddea': 'Germany',  # 🇩🇪
+        }
+        
+        country = country_map.get(flag)
+        if country:
+            return country, flag
+            
         return None, None
 
     async def load_channels(self):

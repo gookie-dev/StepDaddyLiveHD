@@ -12,7 +12,7 @@ key_cache = Cache(os.path.join(cache_dir, "key"))
 
 key_bytes = os.urandom(64)
 
-def get_cached(cache: Cache, key: str, expire: int = 3600) -> Optional[Any]:
+def get_cached(cache: Cache, key: str) -> Optional[Any]:
     """Get a value from cache if it exists."""
     return cache.get(key) if key in cache else None
 
@@ -49,13 +49,14 @@ def urlsafe_base64_decode(base64_string: str) -> str:
     decoded_bytes = base64.urlsafe_b64decode(base64_bytes)
     return decoded_bytes.decode("utf-8")
 
-def load_meta_data() -> dict:
+def get_meta_data() -> dict:
     """Load metadata with caching."""
-    cached_meta = get_cached(meta_cache, "meta", expire=86400)  # 24 hours
+    cached_meta = get_cached(meta_cache, "meta")
     if cached_meta:
         return cached_meta
     
-    with open(os.path.join(os.path.dirname(__file__), "meta.json"), "r") as f:
+    meta_path = os.path.join(os.path.dirname(__file__), "meta.json")
+    with open(meta_path, "r") as f:
         meta = json.load(f)
-    set_cached(meta_cache, "meta", meta, expire=86400)
+    set_cached(meta_cache, "meta", meta, expire=86400)  # 24 hours
     return meta
