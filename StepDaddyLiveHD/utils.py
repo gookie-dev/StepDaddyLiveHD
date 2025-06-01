@@ -33,12 +33,16 @@ def encrypt(input_string: str) -> str:
     return base64.urlsafe_b64encode(result).decode().rstrip('=')
 
 def decrypt(input_string: str) -> str:
-    padding_needed = 4 - (len(input_string) % 4)
-    if padding_needed:
-        input_string += '=' * padding_needed
-    input_bytes = base64.urlsafe_b64decode(input_string)
-    result = xor(input_bytes)
-    return result.decode()
+    try:
+        padding_needed = 4 - (len(input_string) % 4)
+        if padding_needed:
+            input_string += '=' * padding_needed
+        input_bytes = base64.urlsafe_b64decode(input_string)
+        result = xor(input_bytes)
+        return result.decode('utf-8', errors='ignore')
+    except UnicodeDecodeError:
+        # If UTF-8 decoding fails, return the raw string
+        return input_string
 
 def xor(input_bytes: bytes) -> bytes:
     return bytes([input_bytes[i] ^ key_bytes[i % len(key_bytes)] for i in range(len(input_bytes))])
