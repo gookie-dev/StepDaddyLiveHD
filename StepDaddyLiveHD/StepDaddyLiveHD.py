@@ -1,6 +1,6 @@
 import reflex as rx
 import StepDaddyLiveHD.pages
-from typing import List
+from typing import List, Optional
 from StepDaddyLiveHD import backend
 from StepDaddyLiveHD.components import navbar, card
 from StepDaddyLiveHD.step_daddy import Channel
@@ -9,35 +9,59 @@ from StepDaddyLiveHD.step_daddy import Channel
 class State(rx.State):
     channels: List[Channel] = []
     search_query: str = ""
+    selected_country: Optional[str] = None
+
+    @rx.var
+    def available_countries(self) -> List[str]:
+        countries = set()
+        for channel in self.channels:
+            if channel.country and channel.country_flag:
+                countries.add(f"{channel.country_flag} {channel.country}")
+        return sorted(list(countries))
 
     @rx.var
     def filtered_channels(self) -> List[Channel]:
-        if not self.search_query:
-            return self.channels
-        return [ch for ch in self.channels if self.search_query.lower() in ch.name.lower()]
+        filtered = self.channels
+        if self.search_query:
+            filtered = [ch for ch in filtered if self.search_query.lower() in ch.name.lower()]
+        if self.selected_country:
+            country_name = self.selected_country.split(" ", 1)[1] if " " in self.selected_country else self.selected_country
+            filtered = [ch for ch in filtered if ch.country == country_name]
+        return filtered
 
     async def on_load(self):
         self.channels = backend.get_channels()
 
 
+def search_component() -> rx.Component:
+    return rx.hstack(
+        rx.input(
+            rx.input.slot(
+                rx.icon("search"),
+            ),
+            placeholder="Search channels...",
+            on_change=State.set_search_query,
+            value=State.search_query,
+            width="100%",
+            max_width="25rem",
+            size="3",
+        ),
+        rx.select(
+            State.available_countries,
+            placeholder="Filter by country",
+            on_change=State.set_selected_country,
+            value=State.selected_country,
+            size="3",
+            width="12rem",
+        ),
+        spacing="4",
+    )
+
+
 @rx.page("/", on_load=State.on_load)
 def index() -> rx.Component:
     return rx.box(
-        navbar(
-            rx.box(
-                rx.input(
-                    rx.input.slot(
-                        rx.icon("search"),
-                    ),
-                    placeholder="Search channels...",
-                    on_change=State.set_search_query,
-                    value=State.search_query,
-                    width="100%",
-                    max_width="25rem",
-                    size="3",
-                ),
-            ),
-        ),
+        navbar(search_component()),
         rx.center(
             rx.cond(
                 State.channels,

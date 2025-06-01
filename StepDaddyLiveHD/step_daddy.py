@@ -1,10 +1,11 @@
 import json
 import re
 import reflex as rx
+import asyncio
 from urllib.parse import quote, urlparse
 from curl_cffi import AsyncSession
-from typing import List
-from .utils import encrypt, decrypt, urlsafe_base64
+from typing import List, Optional, Dict
+from .utils import encrypt, decrypt, urlsafe_base64, get_meta_data, get_cached, set_cached, stream_cache, key_cache, cache_logo
 from rxconfig import config
 
 
@@ -13,6 +14,8 @@ class Channel(rx.Base):
     name: str
     tags: List[str]
     logo: str
+    country: Optional[str] = None
+    country_flag: Optional[str] = None
 
 
 class StepDaddy:
@@ -22,10 +25,10 @@ class StepDaddy:
             self._session = AsyncSession(proxy="socks5://" + socks5)
         else:
             self._session = AsyncSession()
-        self._base_url = "https://daddylive.mp"
+        self._base_url = "https://daddylive.dad"
         self.channels = []
-        with open("StepDaddyLiveHD/meta.json", "r") as f:
-            self._meta = json.load(f)
+        self._meta = get_meta_data()
+        self._stream_locks: Dict[str, asyncio.Lock] = {}
 
     def _headers(self, referer: str = None, origin: str = None):
         if referer is None:
@@ -38,6 +41,32 @@ class StepDaddy:
             headers["Origin"] = origin
         return headers
 
+    def _get_country_from_tags(self, tags: List[str]) -> tuple[Optional[str], Optional[str]]:
+        if not tags:
+            return None, None
+            
+        # El primer tag siempre es la bandera si existe
+        flag = tags[0]
+        
+        # Mapa de banderas a países
+        country_map = {
+            '\ud83c\uddee\ud83c\uddf9': 'Italy',  # 🇮🇹
+            '\ud83c\uddec\ud83c\udde7': 'United Kingdom',  # 🇬🇧
+            '\ud83c\uddfa\ud83c\uddf8': 'United States',  # 🇺🇸
+            '\ud83c\uddea\ud83c\uddf8': 'Spain',  # 🇪🇸
+            '\ud83c\uddeb\ud83c\uddf7': 'France',  # 🇫🇷
+            '\ud83c\udde9\ud83c\uddea': 'Germany',  # 🇩🇪
+            # Agregar más mapeos según sea necesario
+        }
+        
+        country = country_map.get(flag)
+        if country:
+            # Decodificar el emoji de la bandera para mostrarlo correctamente
+            flag_emoji = flag.encode('utf-16', 'surrogatepass').decode('utf-16')
+            return country, flag_emoji
+            
+        return None, None
+
     async def load_channels(self):
         channels = []
         try:
@@ -45,11 +74,11 @@ class StepDaddy:
             channels_block = re.compile("<center><h1(.+?)tab-2", re.MULTILINE | re.DOTALL).findall(str(response.text))
             channels_data = re.compile("href=\"(.*)\" target(.*)<strong>(.*)</strong>").findall(channels_block[0])
             for channel_data in channels_data:
-                channels.append(self._get_channel(channel_data))
+                channels.append(await self._get_channel(channel_data))
         finally:
-            self.channels = sorted(channels, key=lambda channel: (channel.name.startswith("18"), channel.name))
+            self.channels = sorted(channels, key=lambda channel: (channel.country or 'ZZZ', channel.name.startswith("18"), channel.name))
 
-    def _get_channel(self, channel_data) -> Channel:
+    async def _get_channel(self, channel_data) -> Channel:
         channel_id = channel_data[0].split('-')[1].replace('.php', '')
         channel_name = channel_data[2]
         if channel_id == "666":
@@ -63,54 +92,97 @@ class StepDaddy:
         clean_channel_name = re.sub(r"\s*\(.*?\)", "", channel_name)
         meta = self._meta.get(clean_channel_name, {})
         logo = meta.get("logo", "/missing.png")
+        
         if logo.startswith("http"):
-            logo = f"{config.api_url}/logo/{urlsafe_base64(logo)}"
-        return Channel(id=channel_id, name=channel_name, tags=meta.get("tags", []), logo=logo)
+            # Cache the logo
+            file_name = f"{channel_id}.{logo.split('.')[-1]}"
+            try:
+                logo_path = await cache_logo(logo, file_name)
+                logo = f"{config.api_url}/logo/{urlsafe_base64(logo)}"
+            except:
+                logo = "/missing.png"
+                
+        tags = meta.get("tags", [])
+        country, country_flag = self._get_country_from_tags(tags)
+        
+        return Channel(
+            id=channel_id,
+            name=channel_name,
+            tags=tags,
+            logo=logo,
+            country=country,
+            country_flag=country_flag
+        )
 
     async def stream(self, channel_id: str):
-        url = f"{self._base_url}/stream/stream-{channel_id}.php"
-        if len(channel_id) > 3:
-            url = f"{self._base_url}/stream/bet.php?id=bet{channel_id}"
-        response = await self._session.post(url, headers=self._headers())
-        source_url = re.compile("iframe src=\"(.*)\" width").findall(response.text)[0]
-        source_response = await self._session.post(source_url, headers=self._headers(url))
+        # Check cache first
+        cached_stream = get_cached(stream_cache, channel_id)
+        if cached_stream:
+            return cached_stream
 
-        # Not generic
-        channel_key = re.compile(r"var\s+channelKey\s*=\s*\"(.*?)\";").findall(source_response.text)[-1]
-        auth_ts = re.compile(r"var\s+authTs\s*=\s*\"(.*?)\";").findall(source_response.text)[-1]
-        auth_rnd = re.compile(r"var\s+authRnd\s*=\s*\"(.*?)\";").findall(source_response.text)[-1]
-        auth_sig = re.compile(r"var\s+authSig\s*=\s*\"(.*?)\";").findall(source_response.text)[-1]
-        auth_request_url = f"https://top2new.newkso.ru/auth.php?channel_id={channel_key}&ts={auth_ts}&rnd={auth_rnd}&sig={auth_sig}"
-        auth_response = await self._session.get(auth_request_url, headers=self._headers(source_url))
-        if auth_response.status_code != 200:
-            raise ValueError("Failed to get auth response")
-        key_url = urlparse(source_url)
-        key_url = f"{key_url.scheme}://{key_url.netloc}/server_lookup.php?channel_id={channel_key}"
-        key_response = await self._session.get(key_url, headers=self._headers(source_url))
-        server_key = key_response.json().get("server_key")
-        if not server_key:
-            raise ValueError("No server key found in response")
-        if server_key == "top1/cdn":
-            server_url = f"https://top1.newkso.ru/top1/cdn/{channel_key}/mono.m3u8"
-        else:
-            server_url = f"https://{server_key}new.newkso.ru/{server_key}/{channel_key}/mono.m3u8"
-        m3u8 = await self._session.get(server_url, headers=self._headers(quote(str(source_url))))
-        m3u8_data = ""
-        for line in m3u8.text.split("\n"):
-            if line.startswith("#EXT-X-KEY:"):
-                original_url = re.search(r'URI="(.*?)"', line).group(1)
-                line = line.replace(original_url, f"{config.api_url}/key/{encrypt(original_url)}/{encrypt(urlparse(source_url).netloc)}")
-            elif line.startswith("http") and config.proxy_content:
-                line = f"{config.api_url}/content/{encrypt(line)}"
-            m3u8_data += line + "\n"
-        return m3u8_data
+        # Get or create lock for this channel
+        if channel_id not in self._stream_locks:
+            self._stream_locks[channel_id] = asyncio.Lock()
+        
+        async with self._stream_locks[channel_id]:
+            # Check cache again in case another request populated it while waiting
+            cached_stream = get_cached(stream_cache, channel_id)
+            if cached_stream:
+                return cached_stream
+
+            url = f"{self._base_url}/stream/stream-{channel_id}.php"
+            if len(channel_id) > 3:
+                url = f"{self._base_url}/stream/bet.php?id=bet{channel_id}"
+            response = await self._session.post(url, headers=self._headers())
+            source_url = re.compile("iframe src=\"(.*)\" width").findall(response.text)[0]
+            source_response = await self._session.post(source_url, headers=self._headers(url))
+
+            channel_key = re.compile(r"var\s+channelKey\s*=\s*\"(.*?)\";").findall(source_response.text)[-1]
+            auth_ts = re.compile(r"var\s+authTs\s*=\s*\"(.*?)\";").findall(source_response.text)[-1]
+            auth_rnd = re.compile(r"var\s+authRnd\s*=\s*\"(.*?)\";").findall(source_response.text)[-1]
+            auth_sig = re.compile(r"var\s+authSig\s*=\s*\"(.*?)\";").findall(source_response.text)[-1]
+            auth_request_url = f"https://top2new.newkso.ru/auth.php?channel_id={channel_key}&ts={auth_ts}&rnd={auth_rnd}&sig={auth_sig}"
+            auth_response = await self._session.get(auth_request_url, headers=self._headers(source_url))
+            if auth_response.status_code != 200:
+                raise ValueError("Failed to get auth response")
+            key_url = urlparse(source_url)
+            key_url = f"{key_url.scheme}://{key_url.netloc}/server_lookup.php?channel_id={channel_key}"
+            key_response = await self._session.get(key_url, headers=self._headers(source_url))
+            server_key = key_response.json().get("server_key")
+            if not server_key:
+                raise ValueError("No server key found in response")
+            if server_key == "top1/cdn":
+                server_url = f"https://top1.newkso.ru/top1/cdn/{channel_key}/mono.m3u8"
+            else:
+                server_url = f"https://{server_key}new.newkso.ru/{server_key}/{channel_key}/mono.m3u8"
+            m3u8 = await self._session.get(server_url, headers=self._headers(quote(str(source_url))))
+            m3u8_data = ""
+            for line in m3u8.text.split("\n"):
+                if line.startswith("#EXT-X-KEY:"):
+                    original_url = re.search(r'URI="(.*?)"', line).group(1)
+                    line = line.replace(original_url, f"{config.api_url}/key/{encrypt(original_url)}/{encrypt(urlparse(source_url).netloc)}")
+                elif line.startswith("http") and config.proxy_content:
+                    line = f"{config.api_url}/content/{encrypt(line)}"
+                m3u8_data += line + "\n"
+
+            # Cache the result
+            set_cached(stream_cache, channel_id, m3u8_data, expire=3600)
+            return m3u8_data
 
     async def key(self, url: str, host: str):
+        cache_key = f"{url}:{host}"
+        cached_key = get_cached(key_cache, cache_key)
+        if cached_key:
+            return cached_key
+
         url = decrypt(url)
         host = decrypt(host)
         response = await self._session.get(url, headers=self._headers(f"{host}/", host), timeout=60)
         if response.status_code != 200:
             raise Exception(f"Failed to get key")
+        
+        # Cache the key
+        set_cached(key_cache, cache_key, response.content, expire=3600)
         return response.content
 
     @staticmethod
@@ -119,9 +191,43 @@ class StepDaddy:
 
     def playlist(self):
         data = "#EXTM3U\n"
+        current_country = None
+        
+        # Group channels by country
+        country_channels = {}
         for channel in self.channels:
-            entry = f" tvg-logo=\"{channel.logo}\",{channel.name}" if channel.logo else f",{channel.name}"
-            data += f"#EXTINF:-1{entry}\n{config.api_url}/stream/{channel.id}.m3u8\n"
+            country = channel.country or "Other"
+            if country not in country_channels:
+                country_channels[country] = []
+            country_channels[country].append(channel)
+        
+        # Generate playlist with groups
+        for country in sorted(country_channels.keys()):
+            channels = country_channels[country]
+            if not channels:
+                continue
+                
+            # Get country flag from first channel
+            country_flag = next((ch.country_flag for ch in channels if ch.country_flag), "")
+            group_title = f"{country_flag} {country}" if country_flag else country
+            
+            data += f"\n#EXTGRP:{group_title}\n"
+            
+            for channel in channels:
+                tvg_tags = []
+                if channel.logo:
+                    tvg_tags.append(f'tvg-logo="{channel.logo}"')
+                tvg_tags.append(f'group-title="{group_title}"')
+                tvg_string = " ".join(tvg_tags)
+                
+                # Use clean channel name without flag
+                channel_name = channel.name
+                if channel.country_flag and channel_name.startswith(channel.country_flag):
+                    channel_name = channel_name[len(channel.country_flag):].strip()
+                
+                data += f"#EXTINF:-1 {tvg_string},{channel_name}\n"
+                data += f"{config.api_url}/stream/{channel.id}.m3u8\n"
+        
         return data
 
     async def schedule(self):

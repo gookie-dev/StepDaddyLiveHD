@@ -1,7 +1,6 @@
 import reflex as rx
 import os
 
-
 proxy_content = os.environ.get("PROXY_CONTENT", "TRUE").upper() == "TRUE"
 socks5 = os.environ.get("SOCKS5", "")
 
@@ -12,4 +11,5 @@ config = rx.Config(
     proxy_content=proxy_content,
     socks5=socks5,
     show_built_with_reflex=False,
+    tailwind=True,
 )

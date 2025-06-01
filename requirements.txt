@@ -2,3 +2,5 @@ reflex~=0.7.13
 curl-cffi~=0.10.0
 httpx[http2]~=0.28.1
 python-dateutil~=2.9.0
+diskcache~=5.6.3
+aiofiles~=23.2.1
