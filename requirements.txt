@@ -3,3 +3,4 @@ curl-cffi==0.11.4
 httpx[http2]==0.28.1
 python-dateutil==2.9.0
 fastapi==0.116.1
+tzdata==2025.2
