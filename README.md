@@ -38,7 +38,7 @@ docker run -p 3000:3000 step-daddy-live-hd
 2. Clone the repository and navigate into the project directory:
    ```bash
    git clone https://github.com/gookie-dev/StepDaddyLiveHD
-   cd step-daddy-live-hd
+   cd StepDaddyLiveHD
    ```
 3. Create and activate a virtual environment:
    ```bash
