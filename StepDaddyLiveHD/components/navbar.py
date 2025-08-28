@@ -36,7 +36,7 @@ def navbar(search=None) -> rx.Component:
                 rx.hstack(
                     rx.vstack(
                         rx.text(
-                            config.app_name, size="8", weight="bold"
+                            "HiddnTV", size="8", weight="bold"   # CHANGED
                         ),
                         rx.box(
                             background_color="#fa5252",
@@ -74,7 +74,7 @@ def navbar(search=None) -> rx.Component:
                     rx.hstack(
                         rx.vstack(
                             rx.text(
-                                config.app_name, size="7", weight="bold"
+                                "HiddnTV", size="7", weight="bold"   # CHANGED
                             ),
                             rx.box(
                                 background_color="#fa5252",
