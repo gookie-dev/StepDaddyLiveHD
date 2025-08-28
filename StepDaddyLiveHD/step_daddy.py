@@ -19,7 +19,8 @@ class StepDaddy:
     def __init__(self):
         socks5 = config.socks5
         if socks5 != "":
-            self._session = AsyncSession(proxy="socks5://" + socks5)
+            # Use SOCKS5 env var directly (it already includes the socks5:// prefix)
+            self._session = AsyncSession(proxy=socks5)
         else:
             self._session = AsyncSession()
         self._base_url = "https://thedaddy.top"
@@ -41,16 +42,25 @@ class StepDaddy:
     async def load_channels(self):
         channels = []
         try:
-            response = await self._session.get(f"{self._base_url}/24-7-channels.php", headers=self._headers())
-            channels_block = re.compile("<center><h1(.+?)tab-2", re.MULTILINE | re.DOTALL).findall(str(response.text))
-            channels_data = re.compile("href=\"(.*)\" target(.*)<strong>(.*)</strong>").findall(channels_block[0])
+            response = await self._session.get(
+                f"{self._base_url}/24-7-channels.php", headers=self._headers()
+            )
+            channels_block = re.compile(
+                "<center><h1(.+?)tab-2", re.MULTILINE | re.DOTALL
+            ).findall(str(response.text))
+            channels_data = re.compile(
+                "href=\"(.*)\" target(.*)<strong>(.*)</strong>"
+            ).findall(channels_block[0])
             for channel_data in channels_data:
                 channels.append(self._get_channel(channel_data))
         finally:
-            self.channels = sorted(channels, key=lambda channel: (channel.name.startswith("18"), channel.name))
+            self.channels = sorted(
+                channels,
+                key=lambda channel: (channel.name.startswith("18"), channel.name),
+            )
 
     def _get_channel(self, channel_data) -> Channel:
-        channel_id = channel_data[0].split('-')[1].replace('.php', '')
+        channel_id = channel_data[0].split("-")[1].replace(".php", "")
         channel_name = channel_data[2]
         if channel_id == "666":
             channel_name = "Nick Music"
@@ -65,7 +75,12 @@ class StepDaddy:
         logo = meta.get("logo", "/missing.png")
         if logo.startswith("http"):
             logo = f"{config.api_url}/logo/{urlsafe_base64(logo)}"
-        return Channel(id=channel_id, name=channel_name, tags=meta.get("tags", []), logo=logo)
+        return Channel(
+            id=channel_id,
+            name=channel_name,
+            tags=meta.get("tags", []),
+            logo=logo,
+        )
 
     # Not generic
     async def stream(self, channel_id: str):
@@ -80,39 +95,63 @@ class StepDaddy:
             matches = re.compile("iframe src=\"(.*)\" width").findall(response.text)
             if matches:
                 source_url = matches[0]
-                source_response = await self._session.post(source_url, headers=self._headers(url))
+                source_response = await self._session.post(
+                    source_url, headers=self._headers(url)
+                )
                 if key in source_response.text:
                     break
         else:
             raise ValueError("Failed to find source URL for channel")
 
-        channel_key = re.compile(rf"const\s+{re.escape(key)}\s*=\s*\"(.*?)\";").findall(source_response.text)[-1]
-        bundle = re.compile(r"const\s+XJZ\s*=\s*\"(.*?)\";").findall(source_response.text)[-1]
+        channel_key = re.compile(
+            rf"const\s+{re.escape(key)}\s*=\s*\"(.*?)\";"
+        ).findall(source_response.text)[-1]
+        bundle = re.compile(r"const\s+XJZ\s*=\s*\"(.*?)\";").findall(
+            source_response.text
+        )[-1]
         data = decode_bundle(bundle)
         auth_ts = data.get("b_ts", "")
         auth_sig = data.get("b_sig", "")
         auth_rnd = data.get("b_rnd", "")
         auth_url = data.get("b_host", "")
-        auth_request_url = f"{auth_url}auth.php?channel_id={channel_key}&ts={auth_ts}&rnd={auth_rnd}&sig={auth_sig}"
-        auth_response = await self._session.get(auth_request_url, headers=self._headers(source_url))
+        auth_request_url = (
+            f"{auth_url}auth.php?channel_id={channel_key}"
+            f"&ts={auth_ts}&rnd={auth_rnd}&sig={auth_sig}"
+        )
+        auth_response = await self._session.get(
+            auth_request_url, headers=self._headers(source_url)
+        )
         if auth_response.status_code != 200:
             raise ValueError("Failed to get auth response")
         key_url = urlparse(source_url)
-        key_url = f"{key_url.scheme}://{key_url.netloc}/server_lookup.php?channel_id={channel_key}"
-        key_response = await self._session.get(key_url, headers=self._headers(source_url))
+        key_url = (
+            f"{key_url.scheme}://{key_url.netloc}/server_lookup.php?channel_id={channel_key}"
+        )
+        key_response = await self._session.get(
+            key_url, headers=self._headers(source_url)
+        )
         server_key = key_response.json().get("server_key")
         if not server_key:
             raise ValueError("No server key found in response")
         if server_key == "top1/cdn":
-            server_url = f"https://top1.newkso.ru/top1/cdn/{channel_key}/mono.m3u8"
+            server_url = (
+                f"https://top1.newkso.ru/top1/cdn/{channel_key}/mono.m3u8"
+            )
         else:
-            server_url = f"https://{server_key}new.newkso.ru/{server_key}/{channel_key}/mono.m3u8"
-        m3u8 = await self._session.get(server_url, headers=self._headers(quote(str(source_url))))
+            server_url = (
+                f"https://{server_key}new.newkso.ru/{server_key}/{channel_key}/mono.m3u8"
+            )
+        m3u8 = await self._session.get(
+            server_url, headers=self._headers(quote(str(source_url)))
+        )
         m3u8_data = ""
         for line in m3u8.text.split("\n"):
             if line.startswith("#EXT-X-KEY:"):
                 original_url = re.search(r'URI="(.*?)"', line).group(1)
-                line = line.replace(original_url, f"{config.api_url}/key/{encrypt(original_url)}/{encrypt(urlparse(source_url).netloc)}")
+                line = line.replace(
+                    original_url,
+                    f"{config.api_url}/key/{encrypt(original_url)}/{encrypt(urlparse(source_url).netloc)}",
+                )
             elif line.startswith("http") and config.proxy_content:
                 line = f"{config.api_url}/content/{encrypt(line)}"
             m3u8_data += line + "\n"
@@ -121,9 +160,11 @@ class StepDaddy:
     async def key(self, url: str, host: str):
         url = decrypt(url)
         host = decrypt(host)
-        response = await self._session.get(url, headers=self._headers(f"{host}/", host), timeout=60)
+        response = await self._session.get(
+            url, headers=self._headers(f"{host}/", host), timeout=60
+        )
         if response.status_code != 200:
-            raise Exception(f"Failed to get key")
+            raise Exception("Failed to get key")
         return response.content
 
     @staticmethod
@@ -133,10 +174,19 @@ class StepDaddy:
     def playlist(self):
         data = "#EXTM3U\n"
         for channel in self.channels:
-            entry = f" tvg-logo=\"{channel.logo}\",{channel.name}" if channel.logo else f",{channel.name}"
-            data += f"#EXTINF:-1{entry}\n{config.api_url}/stream/{channel.id}.m3u8\n"
+            entry = (
+                f' tvg-logo="{channel.logo}",{channel.name}'
+                if channel.logo
+                else f",{channel.name}"
+            )
+            data += (
+                f"#EXTINF:-1{entry}\n{config.api_url}/stream/{channel.id}.m3u8\n"
+            )
         return data
 
     async def schedule(self):
-        response = await self._session.get(f"{self._base_url}/schedule/schedule-generated.php", headers=self._headers())
+        response = await self._session.get(
+            f"{self._base_url}/schedule/schedule-generated.php",
+            headers=self._headers(),
+        )
         return response.json()
