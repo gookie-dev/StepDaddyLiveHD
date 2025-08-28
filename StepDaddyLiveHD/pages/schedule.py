@@ -126,7 +126,7 @@ def category_badge(category) -> rx.Component:
     )
 
 
-@rx.page("/schedule", on_load=ScheduleState.on_load)
+@rx.page("/schedule", on_load=ScheduleState.on_load, title=HiddnTV)
 def schedule() -> rx.Component:
     return rx.box(
         navbar(),
