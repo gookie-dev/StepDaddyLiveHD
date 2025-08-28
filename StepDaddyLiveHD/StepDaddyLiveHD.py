@@ -3,8 +3,7 @@ import StepDaddyLiveHD.pages
 from typing import List
 from StepDaddyLiveHD import backend
 from StepDaddyLiveHD.components import navbar, card
-from StepDaddyLiveHD.step_daddy import Channel, StepDaddy
-import asyncio
+from StepDaddyLiveHD.step_daddy import Channel
 
 
 class State(rx.State):
@@ -15,16 +14,13 @@ class State(rx.State):
     def filtered_channels(self) -> List[Channel]:
         if not self.search_query:
             return self.channels
-        return [
-            ch for ch in self.channels
-            if self.search_query.lower() in ch.name.lower()
-        ]
+        return [ch for ch in self.channels if self.search_query.lower() in ch.name.lower()]
 
     async def on_load(self):
         self.channels = backend.get_channels()
 
 
-# ✅ Homepage (with title set to HiddnTV)
+# ✅ Home page
 @rx.page("/", on_load=State.on_load, title="HiddnTV")
 def index() -> rx.Component:
     return rx.box(
@@ -70,16 +66,24 @@ def index() -> rx.Component:
     )
 
 
-# ✅ New stream route (matches DaddyLive style: /stream/<id>.m3u8)
-@rx.page(route="/stream/[id].m3u8", title="HiddnTV")
+# ✅ Stream endpoint (Reflex-safe)
+# Uses /stream/[id] instead of /stream/[id].m3u8
+@rx.page(route="/stream/[id]", title="HiddnTV")
 def stream_page(id: str):
+    from StepDaddyLiveHD.step_daddy import StepDaddy
+    import asyncio
+
     step_daddy = StepDaddy()
     m3u8_data = asyncio.run(step_daddy.stream(id))
-    # Return the m3u8 directly
-    return rx.stream(m3u8_data)
+
+    # Serve .m3u8 data with correct headers so player knows it’s an HLS playlist
+    return rx.Response(
+        content=m3u8_data,
+        headers={"Content-Type": "application/vnd.apple.mpegurl"}
+    )
 
 
-# ✅ App init
+# ✅ App definition
 app = rx.App(
     theme=rx.theme(
         appearance="dark",
