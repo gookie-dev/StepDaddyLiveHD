@@ -11,6 +11,7 @@ config = rx.Config(
     proxy_content=proxy_content,
     socks5=socks5,
     show_built_with_reflex=False,
+    api_url="https://watch.hiddn.space",   # 👈 updated to your domain
     plugins=[
         rx.plugins.SitemapPlugin(),
         rx.plugins.TailwindV4Plugin(),
