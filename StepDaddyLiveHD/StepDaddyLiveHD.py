@@ -66,21 +66,25 @@ def index() -> rx.Component:
     )
 
 
-# ✅ Stream endpoint (Reflex-safe)
-# Uses /stream/[id] instead of /stream/[id].m3u8
+# ✅ Reflex still registers this page (but with a simple placeholder)
 @rx.page(route="/stream/[id]", title="HiddnTV")
-def stream_page(id: str):
-    from StepDaddyLiveHD.step_daddy import StepDaddy
-    import asyncio
-
-    step_daddy = StepDaddy()
-    m3u8_data = asyncio.run(step_daddy.stream(id))
-
-    # Serve .m3u8 data with correct headers so player knows it’s an HLS playlist
-    return rx.Response(
-        content=m3u8_data,
-        headers={"Content-Type": "application/vnd.apple.mpegurl"}
+def stream_page(id: str = ""):
+    return rx.center(
+        rx.text(f"Loading stream {id}..."),
+        height="100vh",
     )
+
+
+# ✅ FastAPI backend route serves the real .m3u8
+from fastapi.responses import PlainTextResponse
+from StepDaddyLiveHD.step_daddy import StepDaddy
+import asyncio
+
+@backend.fastapi_app.get("/api/stream/{id}")
+async def get_stream(id: str):
+    step_daddy = StepDaddy()
+    m3u8_data = await asyncio.to_thread(step_daddy.stream, id)
+    return PlainTextResponse(m3u8_data, media_type="application/vnd.apple.mpegurl")
 
 
 # ✅ App definition
