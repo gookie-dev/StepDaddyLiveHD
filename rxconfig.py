@@ -7,11 +7,11 @@ socks5 = os.environ.get("SOCKS5", "")
 print(f"PROXY_CONTENT: {proxy_content}\nSOCKS5: {socks5}")
 
 config = rx.Config(
-    app_name="StepDaddyLiveHD",   # must match folder/module name
+    app_name="StepDaddyLiveHD",
     proxy_content=proxy_content,
     socks5=socks5,
     show_built_with_reflex=False,
-    api_url="https://watch.hiddn.space",   # 👈 updated to your domain
+    api_url=os.environ.get("API_URL", "http://localhost:3000"),  # <--- from ENV, fallback localhost
     plugins=[
         rx.plugins.SitemapPlugin(),
         rx.plugins.TailwindV4Plugin(),
