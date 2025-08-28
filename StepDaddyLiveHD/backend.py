@@ -10,10 +10,10 @@ from .utils import urlsafe_base64_decode
 fastapi_app = FastAPI()
 step_daddy = StepDaddy()
 
-# ✅ Build client with optional SOCKS5 from env
+# ✅ Build httpx client with optional SOCKS5 support (httpx>=0.28 uses proxy= not proxies=)
 SOCKS5 = os.getenv("SOCKS5")
-proxies = {"all://": SOCKS5} if SOCKS5 else None
-client = httpx.AsyncClient(http2=True, timeout=None, proxies=proxies)
+proxy = SOCKS5 if SOCKS5 else None
+client = httpx.AsyncClient(http2=True, timeout=None, proxy=proxy)
 
 
 @fastapi_app.get("/stream/{channel_id}.m3u8")
@@ -22,7 +22,7 @@ async def stream(channel_id: str):
         return Response(
             content=await step_daddy.stream(channel_id),
             media_type="application/vnd.apple.mpegurl",
-            headers={f"Content-Disposition": f"attachment; filename={channel_id}.m3u8"}
+            headers={f"Content-Disposition": f"attachment; filename={channel_id}.m3u8"},
         )
     except IndexError:
         return JSONResponse(
@@ -139,8 +139,8 @@ async def logo(logo: str):
 @fastapi_app.get("/api/whatsmyip")
 async def whats_my_ip():
     """Check public IP and confirm proxy usage."""
-    test_proxies = {"all://": SOCKS5} if SOCKS5 else None
-    async with httpx.AsyncClient(proxies=test_proxies) as test_client:
+    proxy_cfg = SOCKS5 if SOCKS5 else None
+    async with httpx.AsyncClient(proxy=proxy_cfg) as test_client:
         r = await test_client.get("https://api.my-ip.io/ip.json", timeout=10.0)
         return JSONResponse(
             {
