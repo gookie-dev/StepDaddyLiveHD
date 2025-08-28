@@ -45,12 +45,13 @@ class StepDaddy:
             response = await self._session.get(
                 f"{self._base_url}/24-7-channels.php", headers=self._headers()
             )
-            channels_block = re.compile(
-                "<center><h1(.+?)tab-2", re.MULTILINE | re.DOTALL
-            ).findall(str(response.text))
+            # Updated regex to match new HTML format:
+            # <div class="grid-item"><a href="/stream/stream-492.php" target="_blank" rel="noopener"><span style="color: #000000;"><strong>Channel Name</strong></span></a></div>
             channels_data = re.compile(
-                "href=\"(.*)\" target(.*)<strong>(.*)</strong>"
-            ).findall(channels_block[0])
+                r'href="(/stream/stream-\d+\.php)".*?<strong>(.*?)</strong>',
+                re.DOTALL
+            ).findall(response.text)
+            
             for channel_data in channels_data:
                 channels.append(self._get_channel(channel_data))
         finally:
@@ -60,16 +61,21 @@ class StepDaddy:
             )
 
     def _get_channel(self, channel_data) -> Channel:
-        channel_id = channel_data[0].split("-")[1].replace(".php", "")
-        channel_name = channel_data[2]
+        # channel_data[0] is now "/stream/stream-492.php"
+        # Extract the ID from the path
+        channel_id = re.search(r'stream-(\d+)\.php', channel_data[0]).group(1)
+        channel_name = channel_data[1]
+        
+        # Apply name corrections
         if channel_id == "666":
             channel_name = "Nick Music"
         if channel_id == "609":
             channel_name = "Yas TV UAE"
-        if channel_data[2] == "#0 Spain":
+        if channel_name == "#0 Spain":
             channel_name = "Movistar Plus+"
-        elif channel_data[2] == "#Vamos Spain":
+        elif channel_name == "#Vamos Spain":
             channel_name = "Vamos Spain"
+            
         clean_channel_name = re.sub(r"\s*\(.*?\)", "", channel_name)
         meta = self._meta.get(clean_channel_name, {})
         logo = meta.get("logo", "/missing.png")
