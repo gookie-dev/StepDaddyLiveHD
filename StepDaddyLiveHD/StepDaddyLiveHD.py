@@ -20,13 +20,10 @@ class State(rx.State):
         self.channels = backend.get_channels()
 
 
-@rx.page("/", on_load=State.on_load)
+# 👇 Add title="HiddnTV" here so the tab shows HiddnTV
+@rx.page("/", on_load=State.on_load, title="HiddnTV")
 def index() -> rx.Component:
     return rx.box(
-        # Add a head section so the browser tab uses our custom title
-        rx.head(
-            rx.title("HiddnTV")
-        ),
         navbar(
             rx.box(
                 rx.input(
