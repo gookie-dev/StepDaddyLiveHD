@@ -23,6 +23,10 @@ class State(rx.State):
 @rx.page("/", on_load=State.on_load)
 def index() -> rx.Component:
     return rx.box(
+        # Add a head section so the browser tab uses our custom title
+        rx.head(
+            rx.title("HiddnTV")
+        ),
         navbar(
             rx.box(
                 rx.input(
