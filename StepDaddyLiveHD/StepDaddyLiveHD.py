@@ -93,7 +93,10 @@ app = rx.App(
         appearance="dark",
         accent_color="red",
     ),
-    api_transformer=backend.fastapi_app,
 )
 
+# Mount backend FastAPI routes so /api endpoints are visible
+app.api.include_router(backend.fastapi_app.router, prefix="")
+
+# Background update task
 app.register_lifespan_task(backend.update_channels)
