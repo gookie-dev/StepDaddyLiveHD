@@ -87,13 +87,19 @@ async def get_stream(id: str):
     return PlainTextResponse(m3u8_data, media_type="application/vnd.apple.mpegurl")
 
 
+# ✅ Proper Reflex 0.8.7 mounting
+def mount_backend(api):
+    # Mount your backend FastAPI app into Reflex app
+    api.mount("/", backend.fastapi_app)
+    return api
+
 # ✅ App definition
 app = rx.App(
     theme=rx.theme(
         appearance="dark",
         accent_color="red",
     ),
-    api=backend.fastapi_app,  #  use "api" not api_transformer
+    api_transformer=mount_backend,   # <-- correct for Reflex 0.8.7
 )
 
 # Background update task
