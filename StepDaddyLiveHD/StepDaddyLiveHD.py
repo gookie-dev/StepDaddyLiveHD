@@ -93,8 +93,7 @@ app = rx.App(
         appearance="dark",
         accent_color="red",
     ),
-    # Mount backend FastAPI app directly here
-    api_transformer=backend.fastapi_app,
+    api=backend.fastapi_app,  #  use "api" not api_transformer
 )
 
 # Background update task
