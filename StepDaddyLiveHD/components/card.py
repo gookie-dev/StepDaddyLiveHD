@@ -2,7 +2,7 @@ import reflex as rx
 from StepDaddyLiveHD.step_daddy import Channel
 
 
-def card(channel: Channel) -> rx.Component:
+def card(channel: Channel, now_playing: dict | None = None) -> rx.Component:
     return rx.link(
         rx.box(
             rx.image(
@@ -50,6 +50,19 @@ def card(channel: Channel) -> rx.Component:
                             channel.name,
                             color="white",
                             align="center",
+                        ),
+                        rx.cond(
+                            now_playing,
+                            rx.vstack(
+                                rx.hstack(
+                                    rx.moment(now_playing["start_dt"], format="HH:mm", local=True),
+                                    rx.text("-"),
+                                    rx.moment(now_playing["stop_dt"], format="HH:mm", local=True),
+                                ),
+                                rx.text(now_playing["title"], margin_top="0.2rem", color_scheme="gray"),
+                                align_items="center",
+                                margin_top="0.5rem",
+                            ),
                         ),
                         padding_top="0.7rem",
                         padding_bottom="3rem",

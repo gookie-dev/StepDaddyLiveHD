@@ -9,6 +9,7 @@ from StepDaddyLiveHD.step_daddy import Channel
 class State(rx.State):
     channels: List[Channel] = []
     search_query: str = ""
+    now_playing_map: dict[str, dict] = {}
 
     @rx.var
     def filtered_channels(self) -> List[Channel]:
@@ -18,6 +19,8 @@ class State(rx.State):
 
     async def on_load(self):
         self.channels = backend.get_channels()
+        # Recupera la mappa di cosa c'è in onda ora
+        self.now_playing_map = backend.get_now_playing_map()
 
 
 @rx.page("/", on_load=State.on_load)
@@ -44,7 +47,7 @@ def index() -> rx.Component:
                 rx.grid(
                     rx.foreach(
                         State.filtered_channels,
-                        lambda channel: card(channel),
+                        lambda channel: card(channel, State.now_playing_map.get(channel.id, None)),
                     ),
                     grid_template_columns="repeat(auto-fill, minmax(250px, 1fr))",
                     spacing=rx.breakpoints(
@@ -74,3 +77,4 @@ app = rx.App(
 )
 
 app.register_lifespan_task(backend.update_channels)
+app.register_lifespan_task(backend.update_epg)

@@ -2,7 +2,8 @@ import reflex as rx
 from rxconfig import config
 from StepDaddyLiveHD import backend
 from StepDaddyLiveHD.components import navbar, MediaPlayer
-from StepDaddyLiveHD.step_daddy import Channel
+from StepDaddyLiveHD.step_daddy import Channel, EpgProgram
+from datetime import datetime
 
 media_player = MediaPlayer.create
 
@@ -10,6 +11,7 @@ media_player = MediaPlayer.create
 class WatchState(rx.State):
     is_loaded: bool = False
 
+    epg: list[EpgProgram] = []
     @rx.var
     def channel(self) -> Channel | None:
         self.is_loaded = False
@@ -20,6 +22,35 @@ class WatchState(rx.State):
     @rx.var
     def url(self) -> str:
         return f"{config.api_url}/stream/{self.channel_id}.m3u8"
+
+    @rx.var
+    def current_program(self) -> EpgProgram | None:
+        if not self.epg:
+            return None
+        return self.epg[0]
+
+    @rx.var
+    def next_program(self) -> EpgProgram | None:
+        if len(self.epg) < 2:
+            return None
+        return self.epg[1]
+
+    async def on_load(self):
+        self.is_loaded = False
+        data = await backend.epg_for_channel(str(self.channel_id))
+        # Converte la risposta JSON (lista di dict) in oggetti EpgProgram
+        self.epg = [
+            EpgProgram(
+                start=it["start"],
+                stop=it["stop"],
+                title=it["title"],
+                desc=it.get("desc"),
+                start_dt=datetime.fromisoformat(it["start_dt"]),
+                stop_dt=datetime.fromisoformat(it["stop_dt"]),
+            )
+            for it in data
+        ]
+        self.is_loaded = True
 
 
 def uri_card() -> rx.Component:
@@ -71,7 +102,38 @@ def uri_card() -> rx.Component:
     )
 
 
-@rx.page("/watch/[channel_id]")
+def epg_view() -> rx.Component:
+    return rx.card(
+        rx.vstack(
+            rx.cond(
+                WatchState.current_program,
+                rx.vstack(
+                    rx.heading("Now Playing", size="4"),
+                    rx.hstack(
+                        rx.moment(WatchState.current_program.start_dt, format="HH:mm", local=True),
+                        rx.text("-"),
+                        rx.moment(WatchState.current_program.stop_dt, format="HH:mm", local=True),
+                    ),
+                    rx.heading(WatchState.current_program.title, size="3", margin_top="0.5rem"),
+                    rx.cond(
+                        WatchState.current_program.desc,
+                        rx.text(WatchState.current_program.desc, margin_top="0.2rem", color_scheme="gray"),
+                    ),
+                    width="100%",
+                    align_items="start"
+                )
+            ),
+            rx.cond(
+                WatchState.next_program,
+                rx.vstack(
+                    rx.heading(f"Up Next: {WatchState.next_program.title}", size="3", margin_top="1rem"),
+                    align_items="start"
+                )
+            )
+        )
+    )
+
+@rx.page("/watch/[channel_id]", on_load=WatchState.on_load)
 def watch() -> rx.Component:
     return rx.box(
         navbar(),
@@ -202,6 +264,12 @@ def watch() -> rx.Component:
                     padding_bottom="0.3rem",
                     width="100%",
                 ),
+            ),
+            rx.cond(
+                WatchState.is_loaded,
+                rx.center(
+                    epg_view(), width="100%", margin_top="1rem"
+                )
             ),
             rx.fragment(
                 rx.mobile_only(

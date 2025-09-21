@@ -1,9 +1,12 @@
 import json
 import re
 import reflex as rx
+from pydantic import model_serializer
 from urllib.parse import quote, urlparse
+from datetime import datetime
+from zoneinfo import ZoneInfo
 from curl_cffi import AsyncSession
-from typing import List
+from typing import List, Dict
 from .utils import encrypt, decrypt, urlsafe_base64, decode_bundle
 from rxconfig import config
 
@@ -11,8 +14,18 @@ from rxconfig import config
 class Channel(rx.Base):
     id: str
     name: str
+    tvg_id: str
     tags: List[str]
     logo: str
+
+
+class EpgProgram(rx.Base):
+    start: str
+    stop: str
+    title: str
+    desc: str | None = None
+    start_dt: datetime
+    stop_dt: datetime
 
 
 class StepDaddy:
@@ -23,6 +36,7 @@ class StepDaddy:
         else:
             self._session = AsyncSession(verify=False)
         self._base_url = "https://dlhd.dad/"
+        self.epg_data: Dict[str, List[EpgProgram]] = {}
         self.channels = []
         with open("StepDaddyLiveHD/meta.json", "r") as f:
             self._meta = json.load(f)
@@ -74,7 +88,7 @@ class StepDaddy:
         logo = meta.get("logo", "/missing.png")
         if logo.startswith("http"):
             logo = f"{config.api_url}/logo/{urlsafe_base64(logo)}"
-        return Channel(id=channel_id, name=channel_name, tags=meta.get("tags", []), logo=logo)
+        return Channel(id=channel_id, name=channel_name, tvg_id=meta.get("tvg_id", ""), tags=meta.get("tags", []), logo=logo)
 
     def _parse_channel_from_html(self, html_block: str) -> Channel | None:
         href_match = re.search(r'href="/watch\.php\?id=(\d+)"', html_block)
@@ -150,11 +164,21 @@ class StepDaddy:
         return decrypt(path)
 
     def playlist(self):
-        data = "#EXTM3U\n"
+        epg_url = f"{config.api_url}/epg.xml"
+        data = f'#EXTM3U url-tvg="{epg_url}"\n'
         for channel in self.channels:
-            entry = f" tvg-logo=\"{channel.logo}\",{channel.name}" if channel.logo else f",{channel.name}"
-            data += f"#EXTINF:-1{entry}\n{config.api_url}/stream/{channel.id}.m3u8\n"
+            attributes = f'tvg-id="{channel.tvg_id}" tvg-logo="{channel.logo}"'
+            data += f'#EXTINF:-1 {attributes},{channel.name}\n{config.api_url}/stream/{channel.id}.m3u8\n'
         return data
+
+    def get_epg_for_channel(self, tvg_id: str) -> List[EpgProgram]:
+        now = datetime.now(ZoneInfo("UTC"))
+        programs = self.epg_data.get(tvg_id, [])
+        # Restituisce i programmi non ancora terminati, ordinati per orario di inizio
+        return sorted(
+            [p for p in programs if p.stop_dt > now],
+            key=lambda p: p.start_dt
+        )
 
     async def schedule(self):
         response = await self._session.get(f"{self._base_url}/schedule/schedule-generated.php", headers=self._headers())

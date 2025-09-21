@@ -1,5 +1,6 @@
 {
     "20 Mediaset Italy": {
+		"tvg_id": "20.it",
         "tags": [
             "\ud83c\uddee\ud83c\uddf9",
             "#entertainment",
@@ -8,6 +9,7 @@
         "logo": "https://files.catbox.moe/xwxxhu.png"
     },
     "3sat DE": {
+		"tvg_id": "3sat.de",
         "tags": [
             "\ud83c\udde9\ud83c\uddea",
             "#culture",
@@ -16,6 +18,7 @@
         "logo": "https://files.catbox.moe/zsifxu.png"
     },
     "5 USA": {
+		"tvg_id": "5USA+1.uk",
         "tags": [
             "\ud83c\uddfa\ud83c\uddf8",
             "#variety",
@@ -24,6 +27,7 @@
         "logo": "https://files.catbox.moe/zl0smc.png"
     },
     "6'eren Denmark": {
+		"tvg_id": "6eren.dk",
         "tags": [
             "\ud83c\udde9\ud83c\uddf0",
             "#entertainment",
@@ -32,6 +36,7 @@
         "logo": "https://files.catbox.moe/pi34mr.png"
     },
     "8Sky Cinema Comedy Italy": {
+		"tvg_id": "Sky.Cinema.Comedy.it",
         "tags": [
             "\ud83c\uddee\ud83c\uddf9",
             "#movies",
@@ -40,6 +45,7 @@
         "logo": "https://files.catbox.moe/8jo9w5.png"
     },
     "8Sky Cinema Suspense Italy": {
+		"tvg_id": "Sky.Cinema.Suspense.it",
         "tags": [
             "\ud83c\uddee\ud83c\uddf9",
             "#movies",
@@ -960,6 +966,7 @@
         "logo": "https://files.catbox.moe/x7mxch.png"
     },
     "DAZN 1 Italy": {
+		"tvg_id": "DAZN.1.it.it",
         "tags": [
             "\ud83c\uddee\ud83c\uddf9",
             "#sports",
@@ -1416,6 +1423,7 @@
         "logo": "https://files.catbox.moe/fsc0yl.png"
     },
     "EuroSport 1 Italy": {
+		"tvg_id": "Eurosport.1.it",
         "tags": [
             "\ud83c\uddee\ud83c\uddf9",
             "#sports"
@@ -1444,6 +1452,7 @@
         "logo": "https://files.catbox.moe/c8g1b4.png"
     },
     "EuroSport 2 Italy": {
+		"tvg_id": "Eurosport.2.it",
         "tags": [
             "\ud83c\uddee\ud83c\uddf9",
             "#sports"
@@ -1969,6 +1978,7 @@
         "logo": "https://files.catbox.moe/xx2ny4.png"
     },
     "Italia 1 Italy": {
+		"tvg_id": "Italia.1.it",
         "tags": [
             "\ud83c\uddee\ud83c\uddf9",
             "#general",
@@ -2025,6 +2035,7 @@
         "logo": "https://files.catbox.moe/30v1lg.png"
     },
     "La7 Italy": {
+		"tvg_id": "LA7.HD.it",
         "tags": [
             "\ud83c\uddee\ud83c\uddf9",
             "#general",
@@ -2910,6 +2921,7 @@
         "logo": "https://files.catbox.moe/bmuw7a.png"
     },
     "Rai 1 Italy": {
+		"tvg_id": "Rai1.it",
         "tags": [
             "\ud83c\uddee\ud83c\uddf9",
             "#general",
@@ -2918,6 +2930,7 @@
         "logo": "https://files.catbox.moe/tfz1w2.png"
     },
     "Rai 2 Italy": {
+		"tvg_id": "Rai2.it",
         "tags": [
             "\ud83c\uddee\ud83c\uddf9",
             "#general",
@@ -2926,6 +2939,7 @@
         "logo": "https://files.catbox.moe/apmr72.png"
     },
     "Rai 3 Italy": {
+		"tvg_id": "Rai3.it",
         "tags": [
             "\ud83c\uddee\ud83c\uddf9",
             "#general",
@@ -2934,6 +2948,7 @@
         "logo": "https://files.catbox.moe/z16442.png"
     },
     "Canale 5 Italy": {
+		"tvg_id": "Canale.5.it",
         "tags": [
             "\ud83c\uddee\ud83c\uddf9",
             "#general",
@@ -2942,6 +2957,7 @@
         "logo": "https://files.catbox.moe/rpdmdr.png"
     },
     "Rai Premium Italy": {
+		"tvg_id": "Rai.Premium..5025.it",
         "tags": [
             "\ud83c\uddee\ud83c\uddf9",
             "#premium",
@@ -2950,6 +2966,7 @@
         "logo": "https://files.catbox.moe/ke90km.png"
     },
     "Rai Sport Italy": {
+		"tvg_id": "RAI.Sport...227.it",
         "tags": [
             "\ud83c\uddee\ud83c\uddf9",
             "#sports"
@@ -3151,6 +3168,7 @@
         "logo": "https://files.catbox.moe/oesajd.png"
     },
     "Sky Calcio 1 Italy": {
+		"tvg_id": "Sky.Sport..251.it",
         "tags": [
             "\ud83c\uddee\ud83c\uddf9",
             "#sports",
@@ -3159,6 +3177,7 @@
         "logo": "https://files.catbox.moe/00ldtu.png"
     },
     "Sky Calcio 2 Italy": {
+		"tvg_id": "Sky.Sport..252.it",
         "tags": [
             "\ud83c\uddee\ud83c\uddf9",
             "#sports",
@@ -3167,6 +3186,7 @@
         "logo": "https://files.catbox.moe/hmviay.png"
     },
     "Sky Calcio 3 Italy": {
+		"tvg_id": "Sky.Sport..253.it",
         "tags": [
             "\ud83c\uddee\ud83c\uddf9",
             "#sports",
@@ -3175,6 +3195,7 @@
         "logo": "https://files.catbox.moe/c52xnw.png"
     },
     "Sky Calcio 4 Italy": {
+		"tvg_id": "Sky.Sport..254.it",
         "tags": [
             "\ud83c\uddee\ud83c\uddf9",
             "#sports",
@@ -3183,6 +3204,7 @@
         "logo": "https://files.catbox.moe/15du22.png"
     },
     "Sky Calcio 5 Italy": {
+		"tvg_id": "Sky.Sport..255.it",
         "tags": [
             "\ud83c\uddee\ud83c\uddf9",
             "#sports",
@@ -3191,6 +3213,7 @@
         "logo": "https://files.catbox.moe/e535qi.png"
     },
     "Sky Calcio 6 Italy": {
+		"tvg_id": "Sky.Sport..256.it",
         "tags": [
             "\ud83c\uddee\ud83c\uddf9",
             "#sports",
@@ -3198,15 +3221,8 @@
         ],
         "logo": "https://files.catbox.moe/8scn4l.png"
     },
-    "Sky Calcio 7 Italy": {
-        "tags": [
-            "\ud83c\uddee\ud83c\uddf9",
-            "#sports",
-            "#football"
-        ],
-        "logo": "https://files.catbox.moe/dsfijt.png"
-    },
     "Sky Cinema Action Italy": {
+		"tvg_id": "Sky.Cinema.Action.it",
         "tags": [
             "\ud83c\uddee\ud83c\uddf9",
             "#movies",
@@ -3231,6 +3247,7 @@
         "logo": "https://files.catbox.moe/aw8b3i.png"
     },
     "Sky Cinema Collection Italy": {
+		"tvg_id": "Sky.Cinema.Collection.it",
         "tags": [
             "\ud83c\uddee\ud83c\uddf9",
             "#movies",
@@ -3239,6 +3256,7 @@
         "logo": "https://files.catbox.moe/xmmks5.png"
     },
     "Sky Cinema Drama Italy": {
+		"tvg_id": "Sky.Cinema.Drama.it",
         "tags": [
             "\ud83c\uddee\ud83c\uddf9",
             "#movies",
@@ -3247,6 +3265,7 @@
         "logo": "https://files.catbox.moe/mppv88.png"
     },
     "Sky Cinema Due +24 Italy": {
+		"tvg_id": "Sky.Cinema.Due.+24.it",
         "tags": [
             "\ud83c\uddee\ud83c\uddf9",
             "#movies",
@@ -3255,6 +3274,7 @@
         "logo": "https://files.catbox.moe/dtzn3l.png"
     },
     "Sky Cinema Family Italy": {
+		"tvg_id": "Sky.Cinema.Family.it",
         "tags": [
             "\ud83c\uddee\ud83c\uddf9",
             "#movies",
@@ -3295,6 +3315,7 @@
         "logo": "https://files.catbox.moe/y0r0j1.png"
     },
     "Sky Cinema Romance Italy": {
+		"tvg_id": "Sky.Cinema.Romance.it",
         "tags": [
             "\ud83c\uddee\ud83c\uddf9",
             "#movies",
@@ -3327,6 +3348,7 @@
         ]
     },
     "Sky Cinema Uno +24 Italy": {
+		"tvg_id": "Sky.Cinema.Uno.+24.it",
         "tags": [
             "\ud83c\uddee\ud83c\uddf9",
             "#movies",
@@ -3335,6 +3357,7 @@
         "logo": "https://files.catbox.moe/7pms8f.png"
     },
     "Sky Cinema Uno Italy": {
+		"tvg_id": "Sky.Cinema.Uno.it",
         "tags": [
             "\ud83c\uddee\ud83c\uddf9",
             "#movies",
@@ -3367,6 +3390,7 @@
         "logo": "https://files.catbox.moe/reafe4.png"
     },
     "Sky Serie Italy": {
+		"tvg_id": "Sky.Serie.it",
         "tags": [
             "\ud83c\uddee\ud83c\uddf9",
             "#series",
@@ -3397,6 +3421,7 @@
         "logo": "https://files.catbox.moe/8wajks.png"
     },
     "Sky Sport 24 Italy": {
+		"tvg_id": "Sky.Sport.24.it",
         "tags": [
             "\ud83c\uddee\ud83c\uddf9",
             "#sports"
@@ -3453,6 +3478,7 @@
         "logo": "https://files.catbox.moe/k4kqgh.png"
     },
     "Sky Sport Arena Italy": {
+		"tvg_id": "Sky.Sport.Arena.it",
         "tags": [
             "\ud83c\uddee\ud83c\uddf9",
             "#sports"
@@ -3475,6 +3501,7 @@
         "logo": "https://files.catbox.moe/71nfzp.png"
     },
     "Sky Sport Calcio Italy": {
+		"tvg_id": "Sky.Sport.Calcio.it",
         "tags": [
             "\ud83c\uddee\ud83c\uddf9",
             "#sports",
@@ -3483,6 +3510,7 @@
         "logo": "https://files.catbox.moe/2yh9b8.png"
     },
     "Sky Sport F1 Italy": {
+		"tvg_id": "Sky.Sport.F1.it",
         "tags": [
             "\ud83c\uddee\ud83c\uddf9",
             "#sports",
@@ -3507,6 +3535,7 @@
         "logo": "https://files.catbox.moe/qljgid.png"
     },
     "Sky Sport MotoGP Italy": {
+		"tvg_id": "Sky.Sport.MotoGP.it",
         "tags": [
             "\ud83c\uddee\ud83c\uddf9",
             "#sports",
@@ -3523,6 +3552,7 @@
         "logo": "https://files.catbox.moe/rzwprv.png"
     },
     "Sky Sport Tennis Italy": {
+		"tvg_id": "Sky.Sport.Tennis.it",
         "tags": [
             "\ud83c\uddee\ud83c\uddf9",
             "#sports",
@@ -3539,6 +3569,7 @@
         "logo": "https://files.catbox.moe/y2d40f.png"
     },
     "Sky Sport UNO Italy": {
+		"tvg_id": "Sky.Sport.Uno.it",
         "tags": [
             "\ud83c\uddee\ud83c\uddf9",
             "#sports",
@@ -3587,6 +3618,7 @@
         "logo": "https://files.catbox.moe/qvy75c.png"
     },
     "Sky Sports Golf Italy": {
+		"tvg_id": "Sky.Sport.Golf.it",
         "tags": [
             "\ud83c\uddee\ud83c\uddf9",
             "#sports",
@@ -3635,6 +3667,7 @@
         "logo": "https://files.catbox.moe/09rmaa.png"
     },
     "Sky UNO Italy": {
+		"tvg_id": "Sky.Uno.it",
         "tags": [
             "\ud83c\uddee\ud83c\uddf9",
             "#sports",

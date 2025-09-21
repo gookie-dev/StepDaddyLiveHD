@@ -1,15 +1,17 @@
 import os
 import asyncio
 import httpx
-from StepDaddyLiveHD.step_daddy import StepDaddy, Channel
+from StepDaddyLiveHD.step_daddy import StepDaddy, Channel, EpgProgram
 from fastapi import Response, status, FastAPI
 from fastapi.responses import JSONResponse, StreamingResponse, FileResponse
+from .epg import generate_epg
 from .utils import urlsafe_base64_decode
 
 
 fastapi_app = FastAPI()
 step_daddy = StepDaddy()
 client = httpx.AsyncClient(http2=True, timeout=None, verify=False)
+epg_ready = asyncio.Event()
 
 
 @fastapi_app.get("/stream/{channel_id}.m3u8")
@@ -59,6 +61,17 @@ async def update_channels():
             continue
 
 
+async def update_epg():
+    while True:
+        try:
+            await generate_epg(step_daddy)
+            if not epg_ready.is_set():
+                epg_ready.set()
+            await asyncio.sleep(60 * 60 * 24)  # Update once a day
+        except asyncio.CancelledError:
+            continue
+
+
 def get_channels():
     return step_daddy.channels
 
@@ -69,9 +82,64 @@ def get_channel(channel_id) -> Channel | None:
     return next((channel for channel in step_daddy.channels if channel.id == channel_id), None)
 
 
+def get_now_playing_map():
+    """
+    Ritorna una mappa {channel_id: {title, desc, start_dt, stop_dt}} per i canali con tvg_id valido.
+    Usa i dati già presenti in step_daddy.epg_data.
+    """
+    result = {}
+    for ch in step_daddy.channels:
+        if not getattr(ch, "tvg_id", None):
+            continue
+        programs = step_daddy.get_epg_for_channel(ch.tvg_id)
+        if programs:
+            p = programs[0]
+            result[ch.id] = {
+                "title": p.title,
+                "desc": p.desc,
+                "start_dt": p.start_dt.isoformat(),
+                "stop_dt": p.stop_dt.isoformat(),
+            }
+    return result
+
+
+
+
+
+
 @fastapi_app.get("/playlist.m3u8")
 def playlist():
     return Response(content=step_daddy.playlist(), media_type="application/vnd.apple.mpegurl", headers={"Content-Disposition": "attachment; filename=playlist.m3u8"})
+
+
+@fastapi_app.get("/epg.xml")
+def epg():
+    return FileResponse("epg.xml", media_type="application/xml", headers={"Content-Disposition": "attachment; filename=epg.xml"})
+
+
+@fastapi_app.get("/epg/channel/{channel_id}")
+async def epg_for_channel(channel_id: str):
+    await epg_ready.wait()  # Attendi che l'EPG sia pronto
+    channel = get_channel(channel_id)
+    if not channel or not channel.tvg_id:
+        return []
+    
+    programs = step_daddy.get_epg_for_channel(channel.tvg_id)
+    # Convertiamo manualmente i dati in un formato JSON-safe
+    epg_list = [
+        {
+            "start": p.start,
+            "stop": p.stop,
+            "title": p.title,
+            "desc": p.desc,
+            "start_dt": p.start_dt.isoformat(),
+            "stop_dt": p.stop_dt.isoformat(),
+        }
+        for p in programs
+    ]
+    return epg_list
+
+
 
 
 async def get_schedule():
