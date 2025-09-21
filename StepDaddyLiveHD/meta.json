@@ -959,6 +959,14 @@
         ],
         "logo": "https://files.catbox.moe/x7mxch.png"
     },
+    "DAZN 1 Italy": {
+        "tags": [
+            "\ud83c\uddee\ud83c\uddf9",
+            "#sports",
+            "#football"
+        ],
+        "logo": "https://files.catbox.moe/1mqtlt.png"
+    },
     "DAZN 1 Spain": {
         "tags": [
             "\ud83c\uddea\ud83c\uddf8",
@@ -2924,6 +2932,14 @@
             "#entertainment"
         ],
         "logo": "https://files.catbox.moe/z16442.png"
+    },
+    "Canale 5 Italy": {
+        "tags": [
+            "\ud83c\uddee\ud83c\uddf9",
+            "#general",
+            "#entertainment"
+        ],
+        "logo": "https://files.catbox.moe/rpdmdr.png"
     },
     "Rai Premium Italy": {
         "tags": [

@@ -19,10 +19,10 @@ class StepDaddy:
     def __init__(self):
         socks5 = config.socks5
         if socks5 != "":
-            self._session = AsyncSession(proxy="socks5://" + socks5)
+            self._session = AsyncSession(proxy="socks5://" + socks5, verify=False)
         else:
-            self._session = AsyncSession()
-        self._base_url = "https://thedaddy.top"
+            self._session = AsyncSession(verify=False)
+        self._base_url = "https://dlhd.dad/"
         self.channels = []
         with open("StepDaddyLiveHD/meta.json", "r") as f:
             self._meta = json.load(f)
@@ -42,18 +42,27 @@ class StepDaddy:
         channels = []
         try:
             response = await self._session.get(f"{self._base_url}/24-7-channels.php", headers=self._headers())
-            channels_block = re.compile("<center><h1(.+?)tab-2", re.MULTILINE | re.DOTALL).findall(str(response.text))
-            channels_data = re.compile("href=\"(.*)\" target(.*)<strong>(.*)</strong>").findall(channels_block[0])
-            for channel_data in channels_data:
-                channels.append(self._get_channel(channel_data))
+            response.raise_for_status()  # Assicura che la richiesta sia andata a buon fine
+            channels_html = re.findall(r'<a class="card".*?</a>', response.text, re.DOTALL)
+            for channel_html in channels_html:
+                if channel := self._parse_channel_from_html(channel_html):
+                    channels.append(channel)
         finally:
-            self.channels = sorted(channels, key=lambda channel: (channel.name.startswith("18"), channel.name))
+            if channels:
+                self.channels = sorted(channels, key=lambda channel: (channel.name.startswith("18"), channel.name))
 
     def _get_channel(self, channel_data) -> Channel:
-        channel_id = channel_data[0].split('-')[1].replace('.php', '')
+        id_match = re.search(r'\d+', channel_data[0])
+        if not id_match:
+            raise ValueError(f"Could not extract channel ID from {channel_data[0]}")
+        channel_id = id_match.group(0)
         channel_name = channel_data[2]
         if channel_id == "666":
             channel_name = "Nick Music"
+        if channel_id == "853":
+            channel_name = "Canale 5 Italy"
+        if channel_id == "877":
+            channel_name = "DAZN 1 Italy"
         if channel_id == "609":
             channel_name = "Yas TV UAE"
         if channel_data[2] == "#0 Spain":
@@ -67,11 +76,21 @@ class StepDaddy:
             logo = f"{config.api_url}/logo/{urlsafe_base64(logo)}"
         return Channel(id=channel_id, name=channel_name, tags=meta.get("tags", []), logo=logo)
 
+    def _parse_channel_from_html(self, html_block: str) -> Channel | None:
+        href_match = re.search(r'href="/watch\.php\?id=(\d+)"', html_block)
+        name_match = re.search(r'<div class="card__title">(.*?)</div>', html_block)
+
+        if not href_match or not name_match:
+            return None
+
+        channel_id = href_match.group(1)
+        return self._get_channel((f"watch.php?id={channel_id}", "", name_match.group(1)))
+
     # Not generic
     async def stream(self, channel_id: str):
         key = "CHANNEL_KEY"
 
-        prefixes = ["stream", "cast", "watch"]
+        prefixes = ["stream", "cast", "watch", "plus", "casting", "player"]
         for prefix in prefixes:
             url = f"{self._base_url}/{prefix}/stream-{channel_id}.php"
             if len(channel_id) > 3:
