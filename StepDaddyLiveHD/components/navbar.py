@@ -1,7 +1,7 @@
 from pyexpat.errors import XML_ERROR_INVALID_ARGUMENT
 
 import reflex as rx
-background = "#282a36"
+from pygments.styles.dracula import background
 
 from rxconfig import config
 
