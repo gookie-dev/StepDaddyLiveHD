@@ -1,5 +1,5 @@
 import reflex as rx
-from StepDaddyLiveHD.step_daddy import Channel
+from daddyliveproxy.step_daddy import Channel
 
 
 def card(channel: Channel) -> rx.Component:
@@ -63,7 +63,9 @@ def card(channel: Channel) -> rx.Component:
                             channel.tags,
                             rx.foreach(
                                 channel.tags,
-                                lambda tag: rx.badge(tag, variant="surface", color_scheme="gray")
+                                lambda tag: rx.badge(
+                                    tag, variant="surface", color_scheme="gray"
+                                ),
                             ),
                         ),
                         spacing=rx.breakpoints(

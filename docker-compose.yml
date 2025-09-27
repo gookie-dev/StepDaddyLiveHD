@@ -1,5 +1,5 @@
 services:
-  step-daddy-live-hd:
+  daddyliveproxy:
     build:
       context: .
       dockerfile: Dockerfile
@@ -8,11 +8,15 @@ services:
         API_URL: ${API_URL}
         PROXY_CONTENT: ${PROXY_CONTENT}
         SOCKS5: ${SOCKS5}
+        TZ: ${TZ}
+        GUIDE_UPDATE: ${GUIDE_UPDATE}
     environment:
       - PORT=${PORT}
       - API_URL=${API_URL}
       - PROXY_CONTENT=${PROXY_CONTENT}
       - SOCKS5=${SOCKS5}
+      - TZ=${TZ}
+      - GUIDE_UPDATE=${GUIDE_UPDATE}
     ports:
       - "${PORT}:${PORT}"
     restart: unless-stopped

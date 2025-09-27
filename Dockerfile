@@ -5,10 +5,8 @@ ARG SOCKS5
 # Only set for local/direct access. When TLS is used, the API_URL is assumed to be the same as the frontend.
 ARG API_URL
 
-# It uses a reverse proxy to serve the frontend statically and proxy to backend
-# from a single exposed port, expecting TLS termination to be handled at the
-# edge by the given platform.
-FROM python:3.13 AS builder
+# Multi-arch builder for ARM (e.g., Raspberry Pi) and x86
+FROM --platform=$BUILDPLATFORM python:3.11 AS builder
 
 RUN mkdir -p /app/.web
 RUN python -m venv /app/.venv
@@ -18,7 +16,7 @@ WORKDIR /app
 
 # Install python app requirements and reflex in the container
 COPY requirements.txt .
-RUN pip install -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Install reflex helper utilities like bun/node
 COPY rxconfig.py ./
@@ -33,10 +31,11 @@ RUN REFLEX_API_URL=${API_URL:-http://localhost:$PORT} reflex export --loglevel d
 
 
 # Final image with only necessary files
-FROM python:3.13-slim
+FROM --platform=$TARGETPLATFORM python:3.11-slim
 
 # Install Caddy and redis server inside image
-RUN apt-get update -y && apt-get install -y caddy redis-server && rm -rf /var/lib/apt/lists/*
+RUN apt-get update -y && apt-get install -y --no-install-recommends \
+    caddy redis-server && rm -rf /var/lib/apt/lists/*
 
 ARG PORT API_URL
 ENV PATH="/app/.venv/bin:$PATH" PORT=$PORT REFLEX_API_URL=${API_URL:-http://localhost:$PORT} REDIS_URL=redis://localhost PYTHONUNBUFFERED=1 PROXY_CONTENT=${PROXY_CONTENT:-TRUE} SOCKS5=${SOCKS5:-""}

@@ -1,3 +1,21 @@
+# Docker
+Dockerfile
+.dockerignore
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+venv/
+env/
+
+# IDE / OS files
+.vscode/
+.idea/
+*.DS_Store
+
+# Various
 .web
 !.web/bun.lockb
 !.web/package.json

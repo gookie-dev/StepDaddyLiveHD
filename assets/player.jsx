@@ -1,10 +1,11 @@
-import React from 'react';
-import '@vidstack/react/player/styles/default/theme.css';
-import '@vidstack/react/player/styles/default/layouts/audio.css';
-import '@vidstack/react/player/styles/default/layouts/video.css';
-import { MediaPlayer, MediaProvider, Poster, Captions } from "@vidstack/react"
-import { DefaultVideoLayout, defaultLayoutIcons } from '@vidstack/react/player/layouts/default';
-
+import { Captions, MediaPlayer, MediaProvider, Poster } from "@vidstack/react";
+import {
+  DefaultVideoLayout,
+  defaultLayoutIcons,
+} from "@vidstack/react/player/layouts/default";
+import "@vidstack/react/player/styles/default/layouts/audio.css";
+import "@vidstack/react/player/styles/default/layouts/video.css";
+import "@vidstack/react/player/styles/default/theme.css";
 
 function InjectCSS() {
   const css = `
@@ -43,9 +44,9 @@ export function Player({ title, src }) {
       <MediaPlayer
         title={title}
         src={src}
-        viewType='video'
-        streamType='live'
-        logLevel='warn'
+        viewType="video"
+        streamType="live"
+        logLevel="warn"
         playsInline
         autoplay
         muted
@@ -53,10 +54,8 @@ export function Player({ title, src }) {
         <MediaProvider>
           <Poster className="vds-poster" />
         </MediaProvider>
-        <DefaultVideoLayout
-          icons={defaultLayoutIcons}
-        />
-          <Captions className="vds-captions" />
+        <DefaultVideoLayout icons={defaultLayoutIcons} />
+        <Captions className="vds-captions" />
       </MediaPlayer>
     </>
   );
