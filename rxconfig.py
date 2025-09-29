@@ -1,7 +1,6 @@
 import reflex as rx
 import os
 
-
 proxy_content = os.environ.get("PROXY_CONTENT", "TRUE").upper() == "TRUE"
 socks5 = os.environ.get("SOCKS5", "")
 
@@ -12,6 +11,7 @@ config = rx.Config(
     proxy_content=proxy_content,
     socks5=socks5,
     show_built_with_reflex=False,
+    api_url=os.environ.get("API_URL", "http://localhost:3000"),  # <--- from ENV, fallback localhost
     plugins=[
         rx.plugins.SitemapPlugin(),
         rx.plugins.TailwindV4Plugin(),

@@ -20,7 +20,8 @@ class State(rx.State):
         self.channels = backend.get_channels()
 
 
-@rx.page("/", on_load=State.on_load)
+# ✅ Home page
+@rx.page("/", on_load=State.on_load, title="HiddnTV")
 def index() -> rx.Component:
     return rx.box(
         navbar(
@@ -65,12 +66,41 @@ def index() -> rx.Component:
     )
 
 
+# ✅ Reflex still registers this page (but with a simple placeholder)
+@rx.page(route="/stream/[id]", title="HiddnTV")
+def stream_page(id: str = ""):
+    return rx.center(
+        rx.text(f"Loading stream {id}..."),
+        height="100vh",
+    )
+
+
+# ✅ FastAPI backend route serves the real .m3u8
+from fastapi.responses import PlainTextResponse
+from StepDaddyLiveHD.step_daddy import StepDaddy
+import asyncio
+
+@backend.fastapi_app.get("/api/stream/{id}")
+async def get_stream(id: str):
+    step_daddy = StepDaddy()
+    m3u8_data = await asyncio.to_thread(step_daddy.stream, id)
+    return PlainTextResponse(m3u8_data, media_type="application/vnd.apple.mpegurl")
+
+
+# ✅ Proper Reflex 0.8.7 mounting
+def mount_backend(api):
+    # Mount your backend FastAPI app into Reflex app
+    api.mount("/", backend.fastapi_app)
+    return api
+
+# ✅ App definition
 app = rx.App(
     theme=rx.theme(
         appearance="dark",
         accent_color="red",
     ),
-    api_transformer=backend.fastapi_app,
+    api_transformer=mount_backend,   # <-- correct for Reflex 0.8.7
 )
 
+# Background update task
 app.register_lifespan_task(backend.update_channels)

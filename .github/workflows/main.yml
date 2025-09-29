@@ -1,0 +1,47 @@
+name: Reset fork to upstream
+
+on:
+  workflow_dispatch:
+    inputs:
+      upstream_owner:
+        description: Upstream owner
+        required: false
+        default: gookie-dev
+      upstream_repo:
+        description: Upstream repository
+        required: false
+        default: StepDaddyLiveHD
+      upstream_branch:
+        description: Upstream branch to mirror
+        required: false
+        default: master
+      target_branch:
+        description: Branch in THIS fork to reset
+        required: false
+        default: master
+
+jobs:
+  reset:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout fork
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.inputs.target_branch || 'master' }}
+
+      - name: Add upstream and fetch
+        run: |
+          git remote add upstream https://github.com/${{ github.event.inputs.upstream_owner || 'gookie-dev' }}/${{ github.event.inputs.upstream_repo || 'StepDaddyLiveHD' }}.git
+          git fetch upstream --tags
+
+      - name: Hard reset target branch to upstream
+        run: |
+          git checkout ${{ github.event.inputs.target_branch || 'master' }}
+          git reset --hard upstream/${{ github.event.inputs.upstream_branch || 'master' }}
+
+      - name: Force-push reset to origin (includes tags)
+        run: |
+          git push origin ${{ github.event.inputs.target_branch || 'master' }} --force --tags

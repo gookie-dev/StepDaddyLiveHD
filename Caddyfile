@@ -2,11 +2,13 @@
 
 encode gzip
 
-@backend_routes path /_event/* /ping /_upload /_upload/* /stream/* /key/* /content/* /playlist.m3u8 /logo/*
+# Backend routes
+@backend_routes path /_event/* /ping /_upload /_upload/* /stream/* /key/* /content/* /playlist.m3u8 /logo/* /api/*
 handle @backend_routes {
 	reverse_proxy localhost:8000
 }
 
+# Frontend fallback
 handle {
 	root * /srv
 	route {

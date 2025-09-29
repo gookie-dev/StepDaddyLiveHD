@@ -3,7 +3,7 @@ from rxconfig import config
 from StepDaddyLiveHD.components import navbar
 
 
-@rx.page("/playlist")
+@rx.page("/playlist", title="HiddnTV")
 def playlist() -> rx.Component:
     return rx.box(
         navbar(),
@@ -27,9 +27,9 @@ def playlist() -> rx.Component:
                                 background_color=rx.color("accent", 7),
                             ),
                         ),
-                        rx.heading("Welcome to StepDaddyLiveHD", size="7", margin_bottom="1rem"),
+                        rx.heading("Welcome to HiddnTV", size="7", margin_bottom="1rem"),
                         rx.text(
-                            "StepDaddyLiveHD allows you to watch various TV channels via IPTV. "
+                            "HiddnTV allows you to watch various TV channels via IPTV. "
                             "You can download the playlist file below and use it with your favorite media player.",
                         ),
 
