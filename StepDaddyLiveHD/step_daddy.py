@@ -18,12 +18,12 @@ class Channel(rx.Base):
 class StepDaddy:
     def __init__(self):
         socks5 = config.socks5
-        if socks5 != "":
+        if socks5 != "none" and socks5 != "":
             # Use SOCKS5 env var directly (it already includes the socks5:// prefix)
             self._session = AsyncSession(proxy=socks5)
         else:
             self._session = AsyncSession()
-        self._base_url = "https://thedaddy.top"
+        self._base_url = "https://daddylive.sx"
         self.channels = []
         with open("StepDaddyLiveHD/meta.json", "r") as f:
             self._meta = json.load(f)
